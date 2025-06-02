@@ -45,7 +45,7 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
   const scrapeInstagramProfile = async (username: string) => {
     try {
-      const response = await fetch(`/api/instagram-info?username=${username}`);
+      const response = await fetch(`https://automacoes-wsiacorporativa-ws-proxy.euenvr.easypanel.host/api/instagram-info?username=${username}`);
       if (!response.ok) throw new Error("Erro ao acessar proxy local");
       const data = await response.json();
       return {
