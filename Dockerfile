@@ -1,11 +1,27 @@
-# Etapa 1: build
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN npm install && npm run build
+FROM node:18-alpine
 
-# Etapa 2: servir com NGINX
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Copy bun.lockb if exists
+COPY bun.lockb* ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Install serve to serve the built app
+RUN npm install -g serve
+
+# Expose port
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+
+# Start the application
+CMD ["serve", "-s", "dist", "-l", "80"]
