@@ -20,6 +20,7 @@ const Index = () => {
     nome: '',
     email: '',
     whatsapp: '',
+    pais: '55', // DDI padrão Brasil
     perfil: '',
     nivel: '',
     desafio: ''
@@ -81,8 +82,26 @@ const Index = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'whatsapp') {
-      const formatted = value.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+      // Remover tudo que não é número
+      const numbersOnly = value.replace(/\D/g, '');
+      
+      // Limitar a 11 dígitos (DDD + 9 dígitos do celular)
+      const limited = numbersOnly.slice(0, 11);
+      
+      // Formatar para exibição: (XX) XXXXX-XXXX
+      let formatted = limited;
+      if (limited.length >= 2) {
+        formatted = `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
+      }
+      if (limited.length > 7) {
+        formatted = `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+      }
+      
       setFormData(prev => ({ ...prev, [name]: formatted }));
+    } else if (name === 'pais') {
+      // Só números para o país
+      const numbersOnly = value.replace(/\D/g, '');
+      setFormData(prev => ({ ...prev, [name]: numbersOnly }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -90,6 +109,25 @@ const Index = () => {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Função para formatar WhatsApp para webhook (DDI + DDD + número)
+  const formatWhatsAppForWebhook = (whatsapp: string, countryCode: string) => {
+    // Remover toda formatação
+    const numbersOnly = whatsapp.replace(/\D/g, '');
+    
+    // Verificar se tem 11 dígitos (DDD + 9 dígitos celular)
+    if (numbersOnly.length !== 11) {
+      throw new Error('WhatsApp deve ter 11 dígitos (DDD + 9 dígitos do celular)');
+    }
+    
+    // Verificar se é celular (terceiro dígito deve ser 9)
+    if (numbersOnly[2] !== '9') {
+      throw new Error('Número deve ser de celular (deve começar com 9 após o DDD)');
+    }
+    
+    // Retornar: DDI + DDD + número (ex: 5511999999999)
+    return `${countryCode}${numbersOnly}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,6 +141,20 @@ const Index = () => {
       });
       return;
     }
+
+    // Validar WhatsApp
+    try {
+      formatWhatsAppForWebhook(formData.whatsapp, formData.pais);
+    } catch (error) {
+      toast({
+        title: "WhatsApp inválido",
+        description: error.message,
+        variant: "destructive",
+        className: "bottom-4 right-4 md:top-4 md:bottom-auto"
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       setRegistrationData({
@@ -297,6 +349,25 @@ const Index = () => {
                     : 'opacity-0 translate-y-5'
                 }`}>
                   <label className="block text-sm font-semibold text-slate-200 mb-2">
+                    País (DDI) *
+                  </label>
+                  <Input 
+                    name="pais" 
+                    value={formData.pais} 
+                    onChange={handleInputChange} 
+                    required 
+                    className="h-10 md:h-12 border-2 border-slate-600/50 bg-slate-800/80 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 backdrop-blur-sm hover:border-slate-400 transition-all duration-300" 
+                    placeholder="55" 
+                    maxLength={3} 
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Brasil: 55, EUA: 1, Portugal: 351</p>
+                </div>
+                <div className={`transition-all duration-700 transform ${
+                  visibleSections.has('form') 
+                    ? 'opacity-100 translate-y-0 delay-800' 
+                    : 'opacity-0 translate-y-5'
+                }`}>
+                  <label className="block text-sm font-semibold text-slate-200 mb-2">
                     WhatsApp *
                   </label>
                   <Input 
@@ -308,10 +379,14 @@ const Index = () => {
                     placeholder="(11) 99999-9999" 
                     maxLength={15} 
                   />
+                  <p className="text-xs text-slate-400 mt-1">Apenas números de celular (9 dígitos)</p>
                 </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                 <div className={`transition-all duration-700 transform ${
                   visibleSections.has('form') 
-                    ? 'opacity-100 translate-y-0 delay-800' 
+                    ? 'opacity-100 translate-y-0 delay-900' 
                     : 'opacity-0 translate-y-5'
                 }`}>
                   <label className="block text-sm font-semibold text-slate-200 mb-2">
@@ -335,7 +410,7 @@ const Index = () => {
 
               <div className={`transition-all duration-700 transform ${
                 visibleSections.has('form') 
-                  ? 'opacity-100 translate-y-0 delay-900' 
+                  ? 'opacity-100 translate-y-0 delay-1000' 
                   : 'opacity-0 translate-y-5'
               }`}>
                 <label className="block text-sm font-semibold text-slate-200 mb-2">
@@ -356,7 +431,7 @@ const Index = () => {
 
               <div className={`transition-all duration-700 transform ${
                 visibleSections.has('form') 
-                  ? 'opacity-100 translate-y-0 delay-1000' 
+                  ? 'opacity-100 translate-y-0 delay-1100' 
                   : 'opacity-0 translate-y-5'
               }`}>
                 <label className="block text-sm font-semibold text-slate-200 mb-2">
@@ -374,7 +449,7 @@ const Index = () => {
 
               <div className={`transition-all duration-700 transform ${
                 visibleSections.has('form') 
-                  ? 'opacity-100 translate-y-0 delay-1100' 
+                  ? 'opacity-100 translate-y-0 delay-1200' 
                   : 'opacity-0 translate-y-5'
               }`}>
                 <Button 

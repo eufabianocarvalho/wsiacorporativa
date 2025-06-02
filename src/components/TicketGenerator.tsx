@@ -13,6 +13,7 @@ interface TicketGeneratorProps {
     nome: string;
     email: string;
     whatsapp: string;
+    pais: string;
     perfil: string;
     nivel: string;
     desafio: string;
@@ -29,6 +30,12 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
   const [isVisible, setIsVisible] = useState(false);
   const ticketRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Função para formatar WhatsApp para webhook
+  const formatWhatsAppForWebhook = (whatsapp: string, countryCode: string) => {
+    const numbersOnly = whatsapp.replace(/\D/g, '');
+    return `${countryCode}${numbersOnly}`;
+  };
 
   // Efeito de fade-in quando o componente aparece na tela
   useEffect(() => {
@@ -133,33 +140,54 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
   const sendTicketToWebhook = async () => {
     if (!ticketRef.current) return;
     
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const canvas = await html2canvas(ticketRef.current, { 
-      scale: 2, 
-      useCORS: true, 
-      backgroundColor: null,
-      allowTaint: false,
-      logging: false,
-      width: ticketRef.current.offsetWidth,
-      height: ticketRef.current.offsetHeight
-    });
-    const imageData = canvas.toDataURL('image/png');
-    const payload = {
-      ...formData,
-      instagramUrl,
-      instagramName,
-      instagramFullName,
-      profileImage,
-      ticketImage: imageData,
-      timestamp: new Date().toISOString(),
-      action: 'ticket_generated',
-    };
-    await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Gerar a imagem com as mesmas configurações do download (qualidade máxima)
+      const canvas = await html2canvas(ticketRef.current, { 
+        scale: 3, 
+        useCORS: true, 
+        backgroundColor: null,
+        allowTaint: false,
+        logging: false,
+        width: ticketRef.current.offsetWidth,
+        height: ticketRef.current.offsetHeight,
+        scrollX: 0,
+        scrollY: 0
+      });
+      
+      const imageData = canvas.toDataURL('image/png', 1.0); // Qualidade máxima
+      
+      // Formatar WhatsApp para envio (só números)
+      const whatsappFormatted = formatWhatsAppForWebhook(formData.whatsapp, formData.pais);
+      
+      // Gerar nome do arquivo
+      const fileName = `ingresso-${instagramName}-${Date.now()}.png`;
+      
+      const payload = {
+        ...formData,
+        whatsapp: whatsappFormatted, // Ex: 5511999999999 (só números)
+        whatsappOriginal: formData.whatsapp, // Como o usuário digitou
+        instagramUrl,
+        instagramName,
+        instagramFullName,
+        profileImage,
+        ticketImageUrl: fileName, // Nome do arquivo .png
+        ticketImageBase64: imageData, // Base64 para o webhook processar
+        imageFormat: 'png',
+        imageQuality: 'high',
+        timestamp: new Date().toISOString(),
+        action: 'ticket_generated',
+      };
+      
+      await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      console.error('Erro ao enviar webhook:', error);
+    }
   };
 
   const generateAndSendImage = async () => {
