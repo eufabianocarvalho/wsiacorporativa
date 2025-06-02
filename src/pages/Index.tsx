@@ -82,13 +82,13 @@ const Index = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'whatsapp') {
-      // Remover tudo que não é número
+      // IMPEDIR digitação de qualquer coisa que não seja número
       const numbersOnly = value.replace(/\D/g, '');
       
       // Limitar a 11 dígitos (DDD + 9 dígitos do celular)
       const limited = numbersOnly.slice(0, 11);
       
-      // Formatar para exibição: (XX) XXXXX-XXXX
+      // Formatar APENAS para exibição: (XX) XXXXX-XXXX
       let formatted = limited;
       if (limited.length >= 2) {
         formatted = `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
@@ -98,10 +98,6 @@ const Index = () => {
       }
       
       setFormData(prev => ({ ...prev, [name]: formatted }));
-    } else if (name === 'pais') {
-      // Só números para o país
-      const numbersOnly = value.replace(/\D/g, '');
-      setFormData(prev => ({ ...prev, [name]: numbersOnly }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -109,6 +105,10 @@ const Index = () => {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCountryChange = (value: string) => {
+    setFormData(prev => ({ ...prev, pais: value }));
   };
 
   // Função para formatar WhatsApp para webhook (DDI + DDD + número)
@@ -349,44 +349,48 @@ const Index = () => {
                     : 'opacity-0 translate-y-5'
                 }`}>
                   <label className="block text-sm font-semibold text-slate-200 mb-2">
-                    País (DDI) *
+                    WhatsApp *
                   </label>
-                  <Input 
-                    name="pais" 
-                    value={formData.pais} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="h-10 md:h-12 border-2 border-slate-600/50 bg-slate-800/80 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 backdrop-blur-sm hover:border-slate-400 transition-all duration-300" 
-                    placeholder="55" 
-                    maxLength={3} 
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Brasil: 55, EUA: 1, Portugal: 351</p>
+                  <div className="flex">
+                    <Select onValueChange={handleCountryChange} defaultValue="55">
+                      <SelectTrigger className="w-24 h-10 md:h-12 border-2 border-slate-600/50 bg-slate-800/80 text-white focus:border-blue-400 focus:ring-blue-400 backdrop-blur-sm hover:border-slate-400 transition-all duration-300 rounded-r-none border-r-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-600/50 text-white">
+                        <SelectItem value="55" className="text-white hover:bg-slate-700">🇧🇷 +55</SelectItem>
+                        <SelectItem value="1" className="text-white hover:bg-slate-700">🇺🇸 +1</SelectItem>
+                        <SelectItem value="351" className="text-white hover:bg-slate-700">🇵🇹 +351</SelectItem>
+                        <SelectItem value="34" className="text-white hover:bg-slate-700">🇪🇸 +34</SelectItem>
+                        <SelectItem value="33" className="text-white hover:bg-slate-700">🇫🇷 +33</SelectItem>
+                        <SelectItem value="49" className="text-white hover:bg-slate-700">🇩🇪 +49</SelectItem>
+                        <SelectItem value="39" className="text-white hover:bg-slate-700">🇮🇹 +39</SelectItem>
+                        <SelectItem value="44" className="text-white hover:bg-slate-700">🇬🇧 +44</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input 
+                      name="whatsapp" 
+                      value={formData.whatsapp} 
+                      onChange={handleInputChange} 
+                      onKeyPress={(e) => {
+                        // Impedir digitação de qualquer tecla que não seja número
+                        if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      required 
+                      className="flex-1 h-10 md:h-12 border-2 border-slate-600/50 bg-slate-800/80 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 backdrop-blur-sm hover:border-slate-400 transition-all duration-300 rounded-l-none border-l-0" 
+                      placeholder="(11) 99999-9999" 
+                      maxLength={15}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      type="tel"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Apenas números de celular (9 dígitos após DDD)</p>
                 </div>
                 <div className={`transition-all duration-700 transform ${
                   visibleSections.has('form') 
                     ? 'opacity-100 translate-y-0 delay-800' 
-                    : 'opacity-0 translate-y-5'
-                }`}>
-                  <label className="block text-sm font-semibold text-slate-200 mb-2">
-                    WhatsApp *
-                  </label>
-                  <Input 
-                    name="whatsapp" 
-                    value={formData.whatsapp} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="h-10 md:h-12 border-2 border-slate-600/50 bg-slate-800/80 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 backdrop-blur-sm hover:border-slate-400 transition-all duration-300" 
-                    placeholder="(11) 99999-9999" 
-                    maxLength={15} 
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Apenas números de celular (9 dígitos)</p>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4 md:gap-6">
-                <div className={`transition-all duration-700 transform ${
-                  visibleSections.has('form') 
-                    ? 'opacity-100 translate-y-0 delay-900' 
                     : 'opacity-0 translate-y-5'
                 }`}>
                   <label className="block text-sm font-semibold text-slate-200 mb-2">
@@ -410,7 +414,7 @@ const Index = () => {
 
               <div className={`transition-all duration-700 transform ${
                 visibleSections.has('form') 
-                  ? 'opacity-100 translate-y-0 delay-1000' 
+                  ? 'opacity-100 translate-y-0 delay-900' 
                   : 'opacity-0 translate-y-5'
               }`}>
                 <label className="block text-sm font-semibold text-slate-200 mb-2">
@@ -431,7 +435,7 @@ const Index = () => {
 
               <div className={`transition-all duration-700 transform ${
                 visibleSections.has('form') 
-                  ? 'opacity-100 translate-y-0 delay-1100' 
+                  ? 'opacity-100 translate-y-0 delay-1000' 
                   : 'opacity-0 translate-y-5'
               }`}>
                 <label className="block text-sm font-semibold text-slate-200 mb-2">
@@ -449,7 +453,7 @@ const Index = () => {
 
               <div className={`transition-all duration-700 transform ${
                 visibleSections.has('form') 
-                  ? 'opacity-100 translate-y-0 delay-1200' 
+                  ? 'opacity-100 translate-y-0 delay-1100' 
                   : 'opacity-0 translate-y-5'
               }`}>
                 <Button 
