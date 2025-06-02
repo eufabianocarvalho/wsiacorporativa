@@ -99,7 +99,7 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
   const sendTicketToWebhook = async () => {
     if (!ticketRef.current) return;
-    const canvas = await html2canvas(ticketRef.current, { scale: 2, useCORS: true });
+    const canvas = await html2canvas(ticketRef.current, { scale: 2, useCORS: true, backgroundColor: null });
     const imageData = canvas.toDataURL('image/png');
     const payload = {
       ...formData,
@@ -120,7 +120,11 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
   const generateAndSendImage = async (format: 'PNG' | 'PDF') => {
     if (!ticketRef.current) return null;
-    const canvas = await html2canvas(ticketRef.current, { scale: 3, useCORS: true });
+    const canvas = await html2canvas(ticketRef.current, { 
+      scale: 3, 
+      useCORS: true,
+      backgroundColor: null  // Fundo transparente
+    });
     const imgData = canvas.toDataURL('image/png');
     if (format === 'PNG') return imgData;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 120] });
@@ -176,16 +180,39 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
           ) : (
             <div className="space-y-8">
               <div className="flex justify-center">
-                <div ref={ticketRef} className="bg-blue-900 text-white rounded-3xl p-8 w-full max-w-2xl">
-                  <div className="text-center mb-6">
-                    <div className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full inline-block font-bold text-sm mb-4">
-                      🎫 INGRESSO VIP
-                    </div>
-                    <h1 className="text-2xl font-bold">IA CORPORATIVA: ALÉM DO CHATGPT</h1>
-                    <p className="text-blue-200">Workshop Online Exclusivo</p>
+                <div ref={ticketRef} className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 text-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl overflow-hidden">
+                  {/* Background Pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-4 left-4 w-32 h-32 border border-white/20 rounded-full"></div>
+                    <div className="absolute bottom-4 right-4 w-24 h-24 border border-white/20 rounded-full"></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border border-white/10 rounded-full"></div>
                   </div>
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-yellow-400">
+
+                  {/* Header */}
+                  <div className="relative z-10 text-center mb-8">
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-6 py-3 rounded-full inline-block font-bold text-lg mb-6 shadow-lg">
+                      🎫 INGRESSO VIP EXCLUSIVO
+                    </div>
+                    <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                      IA CORPORATIVA: ALÉM DO CHATGPT
+                    </h1>
+                    <p className="text-blue-200 text-lg font-medium">Workshop Online Exclusivo</p>
+                    <div className="mt-4 flex justify-center space-x-6 text-sm">
+                      <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <span className="text-yellow-400">📅</span> 15 Junho 2025
+                      </div>
+                      <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <span className="text-yellow-400">🕐</span> 19:30
+                      </div>
+                      <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <span className="text-yellow-400">💻</span> Online
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Profile Section */}
+                  <div className="relative z-10 flex items-center space-x-6 mb-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-yellow-400 shadow-xl">
                       {profileImage ? (
                         <img
                           src={profileImage}
@@ -196,19 +223,58 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full bg-blue-500 flex items-center justify-center">
+                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-2xl font-bold">
                           {instagramFullName.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <div>
-                      <p className="text-lg font-bold">{instagramFullName}</p>
-                      <p className="text-blue-200">@{instagramName}</p>
+                    <div className="flex-1">
+                      <h2 className="text-2xl font-bold mb-1">{instagramFullName}</h2>
+                      <p className="text-blue-200 text-lg mb-2">@{instagramName}</p>
+                      <div className="flex space-x-3">
+                        <span className="bg-green-500 text-green-100 px-3 py-1 rounded-full text-sm font-semibold">
+                          ✓ CONFIRMADO
+                        </span>
+                        <span className="bg-yellow-500 text-yellow-100 px-3 py-1 rounded-full text-sm font-semibold">
+                          🎯 VIP ACCESS
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-center pt-4 border-t border-white/20">
-                    <p className="text-blue-200 text-sm">
-                      ID: WIA-{instagramName.substring(0, 3).toUpperCase()}-{Math.random().toString(36).substring(2, 8).toUpperCase()}
+
+                  {/* Benefits Section */}
+                  <div className="relative z-10 mb-6">
+                    <h3 className="text-lg font-bold mb-4 text-center text-yellow-400">🌟 SEUS BENEFÍCIOS VIP</h3>
+                    <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                      <div className="bg-white/5 p-3 rounded-lg">
+                        <div className="text-2xl mb-1">📚</div>
+                        <div className="font-semibold">Material Exclusivo</div>
+                      </div>
+                      <div className="bg-white/5 p-3 rounded-lg">
+                        <div className="text-2xl mb-1">🎥</div>
+                        <div className="font-semibold">Gravação Vitalícia</div>
+                      </div>
+                      <div className="bg-white/5 p-3 rounded-lg">
+                        <div className="text-2xl mb-1">💬</div>
+                        <div className="font-semibold">Suporte Premium</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="relative z-10 text-center pt-6 border-t border-white/20">
+                    <div className="flex justify-between items-center text-sm text-blue-200">
+                      <div>
+                        <p className="font-semibold">ID do Ingresso</p>
+                        <p className="font-mono">WIA-{instagramName.substring(0, 3).toUpperCase()}-{Math.random().toString(36).substring(2, 8).toUpperCase()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">Valor</p>
+                        <p className="text-green-400 font-bold">GRATUITO</p>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-xs opacity-75">
+                      Este ingresso é pessoal e intransferível • Workshop IA Corporativa 2025
                     </p>
                   </div>
                 </div>
