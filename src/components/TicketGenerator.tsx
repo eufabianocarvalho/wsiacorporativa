@@ -85,14 +85,24 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
   const fetchInstagramProfile = async () => {
     if (!instagramUrl) {
-      toast({ title: "Campo obrigatório", description: "Insira seu link ou @ do Instagram", variant: "destructive" });
+      toast({ 
+        title: "Campo obrigatório", 
+        description: "Insira seu link ou @ do Instagram", 
+        variant: "destructive",
+        className: "bottom-4 right-4 md:top-4 md:bottom-auto"
+      });
       return;
     }
 
     setIsGenerating(true);
     const username = extractInstagramUsername(instagramUrl);
     if (!username) {
-      toast({ title: "Usuário inválido", description: "Verifique o link ou o @ informado.", variant: "destructive" });
+      toast({ 
+        title: "Usuário inválido", 
+        description: "Verifique o link ou o @ informado.", 
+        variant: "destructive",
+        className: "bottom-4 right-4 md:top-4 md:bottom-auto"
+      });
       setIsGenerating(false);
       return;
     }
@@ -109,7 +119,11 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
     setTicketGenerated(true);
     setIsGenerating(false);
-    toast({ title: "Ingresso gerado!", description: "Seu ingresso personalizado foi criado." });
+    toast({ 
+      title: "Ingresso gerado!", 
+      description: "Seu ingresso personalizado foi criado.",
+      className: "bottom-4 right-4 md:top-4 md:bottom-auto"
+    });
   };
 
   useEffect(() => {
@@ -151,30 +165,121 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
   const generateAndSendImage = async () => {
     if (!ticketRef.current) return null;
     
-    // Aguardar um pouco para garantir que tudo foi renderizado
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const canvas = await html2canvas(ticketRef.current, { 
-      scale: 3, 
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: null,
-      logging: false,
-      width: ticketRef.current.offsetWidth,
-      height: ticketRef.current.offsetHeight,
-      scrollX: 0,
-      scrollY: 0
-    });
-    return canvas.toDataURL('image/png');
+    try {
+      // Aguardar um pouco para garantir que tudo foi renderizado
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Detectar se é mobile para ajustar configurações
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      const canvas = await html2canvas(ticketRef.current, { 
+        scale: isMobile ? 2 : 3, // Menor escala no mobile para melhor performance
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        logging: false,
+        width: ticketRef.current.offsetWidth,
+        height: ticketRef.current.offsetHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: isMobile ? 414 : window.innerWidth, // Largura específica para mobile
+        windowHeight: isMobile ? 896 : window.innerHeight,
+        onclone: (clonedDoc) => {
+          // Garantir que fontes e estilos sejam aplicados no clone
+          const clonedElement = clonedDoc.querySelector('[data-testid="ticket"]') || clonedDoc.querySelector('[ref]');
+          if (clonedElement) {
+            clonedElement.style.transform = 'none';
+            clonedElement.style.animation = 'none';
+          }
+        }
+      });
+      
+      return canvas.toDataURL('image/png', 0.9); // Qualidade um pouco menor para mobile
+    } catch (error) {
+      console.error('Erro ao gerar imagem:', error);
+      return null;
+    }
   };
 
   const downloadAsPNG = async () => {
-    const imageData = await generateAndSendImage();
-    if (!imageData) return;
-    const link = document.createElement('a');
-    link.href = imageData;
-    link.download = `ingresso-${instagramName}.png`;
-    link.click();
+    try {
+      const imageData = await generateAndSendImage();
+      if (!imageData) {
+        toast({ 
+          title: "Erro no download", 
+          description: "Não foi possível gerar a imagem. Tente novamente.", 
+          variant: "destructive",
+          className: "bottom-4 right-4 md:top-4 md:bottom-auto"
+        });
+        return;
+      }
+
+      // Detectar se é mobile
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // Para mobile: abrir em nova aba para visualizar/salvar
+        const newWindow = window.open();
+        if (newWindow) {
+          newWindow.document.write(`
+            <html>
+              <head><title>Ingresso - ${instagramName}</title></head>
+              <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#000;">
+                <img src="${imageData}" alt="Ingresso" style="max-width:100%; height:auto;" />
+                <script>
+                  // Adicionar botão de download para iOS/Android
+                  setTimeout(() => {
+                    const img = document.querySelector('img');
+                    const button = document.createElement('button');
+                    button.textContent = 'Tocar para Salvar';
+                    button.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 24px; background:#2563eb; color:white; border:none; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer; z-index:1000;';
+                    button.onclick = () => {
+                      const a = document.createElement('a');
+                      a.href = '${imageData}';
+                      a.download = 'ingresso-${instagramName}.png';
+                      a.click();
+                    };
+                    document.body.appendChild(button);
+                  }, 500);
+                </script>
+              </body>
+            </html>
+          `);
+          newWindow.document.close();
+        } else {
+          // Fallback: tentar download direto
+          const a = document.createElement('a');
+          a.href = imageData;
+          a.download = `ingresso-${instagramName}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      } else {
+        // Para desktop: download normal
+        const link = document.createElement('a');
+        link.href = imageData;
+        link.download = `ingresso-${instagramName}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      toast({ 
+        title: "Download iniciado!", 
+        description: isMobile ? "Toque na imagem para salvar" : "Arquivo baixado com sucesso!",
+        className: "bottom-4 right-4 md:top-4 md:bottom-auto"
+      });
+
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast({ 
+        title: "Erro no download", 
+        description: "Tente novamente ou use um navegador diferente.", 
+        variant: "destructive",
+        className: "bottom-4 right-4 md:top-4 md:bottom-auto"
+      });
+    }
   };
 
   return (
@@ -219,7 +324,11 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
           ) : (
             <div className="space-y-8 animate-fadeIn">
               <div className="flex justify-center transform transition-all duration-700 animate-slideUp">
-                <div ref={ticketRef} className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 text-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl overflow-hidden hover:scale-105 transition-transform duration-300">
+                <div 
+                  ref={ticketRef} 
+                  data-testid="ticket"
+                  className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 text-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl overflow-hidden hover:scale-105 transition-transform duration-300"
+                >
                   {/* Background Pattern */}
                   <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-4 left-4 w-32 h-32 border border-white/20 rounded-full"></div>
@@ -319,7 +428,11 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                 </div>
               </div>
               <div className="flex justify-center animate-slideUp delay-300">
-                <Button onClick={downloadAsPNG} className="bg-green-600 hover:bg-green-700 px-8 py-3 text-lg font-semibold rounded-lg transition-all duration-200 hover:scale-105 shadow-lg">
+                <Button 
+                  onClick={downloadAsPNG} 
+                  className="bg-green-600 hover:bg-green-700 px-8 py-3 text-lg font-semibold rounded-lg transition-all duration-200 hover:scale-105 shadow-lg touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
                   📥 Baixar PNG
                 </Button>
               </div>

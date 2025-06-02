@@ -98,7 +98,8 @@ const Index = () => {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
-        variant: "destructive"
+        variant: "destructive",
+        className: "bottom-4 right-4 md:top-4 md:bottom-auto"
       });
       return;
     }
@@ -111,14 +112,16 @@ const Index = () => {
       setShowTicketGenerator(true);
       toast({
         title: "Inscrição realizada com sucesso! 🎉",
-        description: "Agora vamos gerar seu ingresso personalizado. Digite seu Instagram para personalizar!"
+        description: "Agora vamos gerar seu ingresso personalizado. Digite seu Instagram para personalizar!",
+        className: "bottom-4 right-4 md:top-4 md:bottom-auto"
       });
     } catch (error) {
       console.error('Error:', error);
       toast({
         title: "Erro na inscrição",
         description: "Tente novamente em alguns instantes.",
-        variant: "destructive"
+        variant: "destructive",
+        className: "bottom-4 right-4 md:top-4 md:bottom-auto"
       });
     } finally {
       setIsLoading(false);
