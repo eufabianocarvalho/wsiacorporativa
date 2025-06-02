@@ -3,14 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "80:80"
     restart: always
+    # REMOVER: ports: - "80:80"
 
   proxy:
     build:
-      context: ./server
+      context: ./server  
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     restart: always
+    # REMOVER: ports: - "3000:3000"
