@@ -1,0 +1,464 @@
+
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
+import { Download, Instagram } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import Background3D from '@/components/Background3D';
+
+interface TicketGeneratorProps {
+  userEmail: string;
+  userName: string;
+  formData: {
+    nome: string;
+    email: string;
+    whatsapp: string;
+    perfil: string;
+    nivel: string;
+    desafio: string;
+  };
+}
+
+const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, formData }) => {
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [profileImage, setProfileImage] = useState('');
+  const [instagramName, setInstagramName] = useState('');
+  const [instagramFullName, setInstagramFullName] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [ticketGenerated, setTicketGenerated] = useState(false);
+  const ticketRef = useRef<HTMLDivElement>(null);
+
+  const extractInstagramUsername = (url: string) => {
+    const patterns = [
+      /instagram\.com\/([^\/\?]+)/,
+      /^@?([a-zA-Z0-9._]+)$/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        return match[1].replace(/\/$/, '');
+      }
+    }
+    return null;
+  };
+
+  const scrapeInstagramProfile = async (username: string) => {
+    try {
+      // Tentativa com diferentes proxies CORS
+      const proxies = [
+        `https://api.allorigins.win/raw?url=https://www.instagram.com/${username}/`,
+        `https://cors-anywhere.herokuapp.com/https://www.instagram.com/${username}/`,
+        `https://api.codetabs.com/v1/proxy?quest=https://www.instagram.com/${username}/`
+      ];
+
+      for (const proxy of proxies) {
+        try {
+          const response = await fetch(proxy);
+          const html = await response.text();
+          
+          // Extrair dados do HTML usando regex
+          const fullNameMatch = html.match(/"full_name":"([^"]+)"/);
+          const profilePicMatch = html.match(/"profile_pic_url_hd":"([^"]+)"/);
+          
+          if (fullNameMatch || profilePicMatch) {
+            return {
+              full_name: fullNameMatch ? fullNameMatch[1] : username,
+              profile_pic_url: profilePicMatch ? profilePicMatch[1].replace(/\\u0026/g, '&') : null,
+              username: username
+            };
+          }
+        } catch (error) {
+          console.log(`Proxy ${proxy} failed, trying next...`);
+          continue;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Scraping failed:', error);
+      return null;
+    }
+  };
+
+  const fetchInstagramProfile = async () => {
+    if (!instagramUrl) {
+      toast({
+        title: "Link obrigatório",
+        description: "Cole o link do seu perfil do Instagram ou digite seu usuário.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const username = extractInstagramUsername(instagramUrl);
+      
+      if (!username) {
+        toast({
+          title: "Link inválido",
+          description: "Por favor, cole um link válido do Instagram ou digite o usuário.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
+      console.log('Fazendo scraping do perfil:', username);
+      
+      const profileData = await scrapeInstagramProfile(username);
+      
+      if (profileData) {
+        setProfileImage(profileData.profile_pic_url || '');
+        setInstagramName(profileData.username);
+        setInstagramFullName(profileData.full_name);
+        setTicketGenerated(true);
+
+        toast({
+          title: "Ingresso gerado! 🎫",
+          description: "Seus dados do Instagram foram carregados com sucesso!",
+        });
+      } else {
+        // Se o scraping falhar, usar dados básicos
+        setProfileImage('');
+        setInstagramName(username);
+        setInstagramFullName(username);
+        setTicketGenerated(true);
+        
+        toast({
+          title: "Ingresso gerado! 🎫",
+          description: "Não foi possível carregar a foto, mas o ingresso foi criado!",
+        });
+      }
+
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setProfileImage('');
+      setInstagramName(extractInstagramUsername(instagramUrl) || 'usuário');
+      setInstagramFullName(extractInstagramUsername(instagramUrl) || 'usuário');
+      setTicketGenerated(true);
+      
+      toast({
+        title: "Ingresso gerado! 🎫",
+        description: "Houve um problema ao carregar os dados, mas o ingresso foi criado!",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Enviar webhook assim que o ingresso for gerado
+  useEffect(() => {
+    if (ticketGenerated && ticketRef.current) {
+      // Aguardar um pouco para garantir que o ingresso foi renderizado
+      setTimeout(async () => {
+        await sendTicketToWebhook();
+      }, 1000);
+    }
+  }, [ticketGenerated]);
+
+  const sendTicketToWebhook = async () => {
+    if (!ticketRef.current) return;
+
+    try {
+      console.log('Gerando imagem do ingresso para webhook...');
+      
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 2,
+        backgroundColor: null,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      const imageData = canvas.toDataURL('image/png');
+
+      const webhookData = {
+        ...formData,
+        instagramUrl,
+        instagramName,
+        instagramFullName,
+        ticketImage: imageData,
+        timestamp: new Date().toISOString(),
+        action: 'ticket_generated',
+        source: "workshop_ia_corporativa"
+      };
+
+      await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookData),
+      });
+
+      console.log('Ingresso enviado para webhook com sucesso');
+    } catch (error) {
+      console.error('Erro ao enviar ingresso para webhook:', error);
+    }
+  };
+
+  const generateAndSendImage = async (format: 'PNG' | 'PDF') => {
+    if (!ticketRef.current) return null;
+
+    try {
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 3,
+        backgroundColor: null,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      if (format === 'PNG') {
+        return canvas.toDataURL('image/png');
+      } else {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: [200, 120]
+        });
+
+        const imgWidth = 180;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+        return pdf.output('datauristring');
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      return null;
+    }
+  };
+
+  const downloadAsPNG = async () => {
+    if (!ticketRef.current) return;
+
+    try {
+      const imageData = await generateAndSendImage('PNG');
+      if (!imageData) return;
+
+      const link = document.createElement('a');
+      link.download = `ingresso-workshop-ia-${instagramName.replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.href = imageData;
+      link.click();
+
+      toast({
+        title: "Download iniciado! 📱",
+        description: "Seu ingresso PNG foi baixado com sucesso!",
+      });
+    } catch (error) {
+      console.error('Error generating PNG:', error);
+      toast({
+        title: "Erro no download",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadAsPDF = async () => {
+    if (!ticketRef.current) return;
+
+    try {
+      const pdfData = await generateAndSendImage('PDF');
+      if (!pdfData) return;
+
+      const response = await fetch(pdfData);
+      const blob = await response.blob();
+      const pdfUrl = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.download = `ingresso-workshop-ia-${instagramName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      link.href = pdfUrl;
+      link.click();
+
+      toast({
+        title: "Download iniciado! 📄",
+        description: "Seu ingresso PDF foi baixado com sucesso!",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Erro no download",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-black">
+      <Background3D />
+      
+      <div className="relative z-10 py-8">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 bg-gradient-to-r from-white via-gray-200 to-slate-300 bg-clip-text text-transparent">
+              🎫 Gerar Seu Ingresso Personalizado
+            </h1>
+            <p className="text-xl text-gray-300">
+              Cole o link do seu Instagram para personalizar seu ingresso
+            </p>
+          </div>
+
+          {!ticketGenerated ? (
+            <div className="bg-gray-900/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-md mx-auto border border-gray-700/50">
+              <div className="text-center mb-6">
+                <Instagram className="mx-auto mb-4 text-pink-500" size={48} />
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  Cole seu link do Instagram
+                </h2>
+                <p className="text-gray-300">
+                  Vamos buscar sua foto e nome do perfil
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-200 mb-2">
+                    Link do Instagram ou usuário
+                  </label>
+                  <Input
+                    value={instagramUrl}
+                    onChange={(e) => setInstagramUrl(e.target.value)}
+                    placeholder="https://instagram.com/seuperfil ou @seuperfil"
+                    className="h-12 border-2 border-gray-600/50 bg-gray-800/80 text-white placeholder-gray-400 focus:border-blue-400 focus:ring-blue-400"
+                  />
+                </div>
+
+                <Button
+                  onClick={fetchInstagramProfile}
+                  disabled={isGenerating}
+                  className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold"
+                >
+                  {isGenerating ? 'Carregando perfil...' : '✨ Gerar Meu Ingresso'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {/* Ticket Preview */}
+              <div className="flex justify-center">
+                <div
+                  ref={ticketRef}
+                  className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white rounded-3xl p-8 shadow-2xl w-full max-w-2xl relative overflow-hidden"
+                  style={{ minHeight: '400px' }}
+                >
+                  {/* Background Pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                  </div>
+
+                  <div className="relative z-10">
+                    {/* Header */}
+                    <div className="text-center mb-6">
+                      <div className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full inline-block font-bold text-sm mb-4">
+                        🎫 INGRESSO VIP
+                      </div>
+                      <h1 className="text-2xl md:text-3xl font-bold mb-2">
+                        IA CORPORATIVA: ALÉM DO CHATGPT
+                      </h1>
+                      <p className="text-blue-200 text-lg">
+                        Workshop Online Exclusivo
+                      </p>
+                    </div>
+
+                    {/* User Info */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-yellow-400 shadow-lg">
+                          {profileImage ? (
+                            <img
+                              src={profileImage}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                console.log('Erro ao carregar imagem, usando placeholder');
+                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(instagramFullName)}&background=3b82f6&color=fff&size=200`;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                              {instagramFullName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold">{instagramFullName}</p>
+                          <p className="text-blue-200">@{instagramName}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-yellow-400 font-bold text-lg">CONFIRMADO</p>
+                        <p className="text-blue-200 text-sm">Vaga Garantida</p>
+                      </div>
+                    </div>
+
+                    {/* Event Details */}
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-yellow-400 font-semibold mb-1">📅 DATA</p>
+                          <p className="font-bold">04 de Junho de 2025</p>
+                          <p className="text-blue-200">Quarta-feira</p>
+                        </div>
+                        <div>
+                          <p className="text-yellow-400 font-semibold mb-1">🕒 HORÁRIO</p>
+                          <p className="font-bold">20:00h (Brasília)</p>
+                          <p className="text-blue-200">2 horas de conteúdo</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Ticket ID */}
+                    <div className="text-center pt-6 border-t border-white/20">
+                      <p className="text-blue-200 text-sm">
+                        ID: WIA-{instagramName.substring(0, 3).toUpperCase()}-{Math.random().toString(36).substring(2, 8).toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Download Buttons */}
+              <div className="flex flex-col md:flex-row gap-4 justify-center max-w-md mx-auto">
+                <Button
+                  onClick={downloadAsPNG}
+                  className="flex-1 h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold"
+                >
+                  <Download className="mr-2" size={20} />
+                  Baixar PNG
+                </Button>
+                <Button
+                  onClick={downloadAsPDF}
+                  className="flex-1 h-12 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-bold"
+                >
+                  <Download className="mr-2" size={20} />
+                  Baixar PDF
+                </Button>
+              </div>
+
+              <div className="text-center bg-green-900/60 backdrop-blur-md rounded-2xl p-6 max-w-2xl mx-auto border border-green-700/30">
+                <h3 className="text-xl font-bold text-green-300 mb-2">
+                  🎉 Parabéns! Sua vaga está garantida!
+                </h3>
+                <p className="text-green-200">
+                  Você receberá o link de acesso por e-mail e WhatsApp antes do evento.
+                  Salve este ingresso e compartilhe nas suas redes sociais!
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TicketGenerator;
