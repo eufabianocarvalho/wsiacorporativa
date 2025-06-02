@@ -1,5 +1,4 @@
 // server/instagramProxy.mjs
-
 import express from 'express';
 import fetch from 'node-fetch';
 import cors from 'cors';
@@ -15,15 +14,30 @@ app.get('/api/instagram-info', async (req, res) => {
   if (!username) return res.status(400).json({ error: 'Username é obrigatório' });
 
   try {
-    const response = await fetch(`https://www.instagram.com/${username}/`);
+    console.log(`🔍 Buscando dados para: ${username}`);
+    
+    const response = await fetch(`https://www.instagram.com/${username}/`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+      }
+    });
+
+    console.log(`📥 Status da resposta: ${response.status}`);
+    
     const html = await response.text();
+    console.log(`📄 HTML recebido: ${html.length} caracteres`);
+    
     const $ = load(html);
 
-    // Pega o <title> que tem o nome, mas remove @, bullets, etc
     let full_name = $('title').text().replace(/\(.*?\)|[\u2022@]|Instagram photos.*$/gi, '').trim();
-
-    // Procura a imagem dentro da tag <meta property="og:image">
     const profile_pic_url = $('meta[property="og:image"]').attr('content') || null;
+
+    console.log(`✅ Dados encontrados: ${full_name}, ${profile_pic_url ? 'com imagem' : 'sem imagem'}`);
 
     res.json({
       username,
@@ -31,7 +45,7 @@ app.get('/api/instagram-info', async (req, res) => {
       profile_pic_url
     });
   } catch (error) {
-    console.error('Erro no scraping:', error);
+    console.error('❌ Erro no scraping:', error);
     res.status(500).json({ error: 'Erro ao buscar perfil do Instagram' });
   }
 });
