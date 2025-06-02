@@ -98,7 +98,18 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
   const sendTicketToWebhook = async () => {
     if (!ticketRef.current) return;
-    const canvas = await html2canvas(ticketRef.current, { scale: 2, useCORS: true, backgroundColor: null });
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const canvas = await html2canvas(ticketRef.current, { 
+      scale: 2, 
+      useCORS: true, 
+      backgroundColor: null,
+      allowTaint: false,
+      logging: false,
+      width: ticketRef.current.offsetWidth,
+      height: ticketRef.current.offsetHeight
+    });
     const imageData = canvas.toDataURL('image/png');
     const payload = {
       ...formData,
@@ -119,10 +130,20 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
   const generateAndSendImage = async () => {
     if (!ticketRef.current) return null;
+    
+    // Aguardar um pouco para garantir que tudo foi renderizado
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     const canvas = await html2canvas(ticketRef.current, { 
       scale: 3, 
       useCORS: true,
-      backgroundColor: null  // Fundo transparente
+      allowTaint: false,
+      backgroundColor: null,
+      logging: false,
+      width: ticketRef.current.offsetWidth,
+      height: ticketRef.current.offsetHeight,
+      scrollX: 0,
+      scrollY: 0
     });
     return canvas.toDataURL('image/png');
   };
@@ -171,10 +192,10 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
                   {/* Header */}
                   <div className="relative z-10 text-center mb-8">
-                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-6 py-3 rounded-full inline-block font-bold text-lg mb-6 shadow-lg">
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-6 py-3 rounded-full inline-flex items-center justify-center font-bold text-lg mb-6 shadow-lg">
                       🎫 INGRESSO VIP EXCLUSIVO
                     </div>
-                    <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-bold mb-2 text-white">
                       IA CORPORATIVA: ALÉM DO CHATGPT
                     </h1>
                     <p className="text-blue-200 text-lg font-medium">Workshop Online Exclusivo</p>
@@ -212,11 +233,11 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                     <div className="flex-1">
                       <h2 className="text-2xl font-bold mb-1">{instagramFullName}</h2>
                       <p className="text-blue-200 text-lg mb-2">@{instagramName}</p>
-                      <div className="flex space-x-3">
-                        <span className="bg-green-500 text-green-100 px-3 py-1 rounded-full text-sm font-semibold">
+                      <div className="flex flex-wrap gap-3">
+                        <span className="bg-green-500 text-green-100 px-3 py-1 rounded-full text-sm font-semibold flex items-center justify-center">
                           ✓ CONFIRMADO
                         </span>
-                        <span className="bg-yellow-500 text-yellow-100 px-3 py-1 rounded-full text-sm font-semibold">
+                        <span className="bg-yellow-500 text-yellow-100 px-3 py-1 rounded-full text-sm font-semibold flex items-center justify-center">
                           🎯 VIP ACCESS
                         </span>
                       </div>
