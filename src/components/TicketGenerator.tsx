@@ -26,7 +26,27 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
   const [instagramFullName, setInstagramFullName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [ticketGenerated, setTicketGenerated] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const ticketRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Efeito de fade-in quando o componente aparece na tela
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const extractInstagramUsername = (url: string) => {
     const patterns = [
@@ -163,26 +183,43 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
       <div className="relative z-10 py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {!ticketGenerated ? (
-            <div className="bg-gray-900/80 rounded-3xl p-8 shadow-2xl max-w-md mx-auto">
-              <div className="text-center mb-6">
-                <Instagram className="mx-auto text-pink-500 mb-4" size={48} />
+            <div 
+              ref={containerRef}
+              className={`bg-gray-900/80 backdrop-blur-lg rounded-3xl p-8 shadow-2xl max-w-md mx-auto transition-all duration-1000 transform ${
+                isVisible 
+                  ? 'opacity-100 translate-y-0' 
+                  : 'opacity-0 translate-y-10'
+              }`}
+            >
+              <div className={`text-center mb-6 transition-all duration-700 delay-200 transform ${
+                isVisible 
+                  ? 'opacity-100 translate-y-0' 
+                  : 'opacity-0 translate-y-5'
+              }`}>
+                <Instagram className="mx-auto text-pink-500 mb-4 animate-pulse" size={48} />
                 <h2 className="text-2xl font-bold text-white mb-2">Cole seu link do Instagram</h2>
                 <p className="text-gray-300">Vamos buscar sua foto e nome</p>
               </div>
-              <Input
-                value={instagramUrl}
-                onChange={(e) => setInstagramUrl(e.target.value)}
-                placeholder="https://instagram.com/seuperfil ou @seuperfil"
-                className="mb-4"
-              />
-              <Button onClick={fetchInstagramProfile} disabled={isGenerating} className="w-full">
-                {isGenerating ? 'Gerando...' : '✨ Gerar Ingresso'}
-              </Button>
+              <div className={`space-y-4 transition-all duration-700 delay-400 transform ${
+                isVisible 
+                  ? 'opacity-100 translate-y-0' 
+                  : 'opacity-0 translate-y-5'
+              }`}>
+                <Input
+                  value={instagramUrl}
+                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  placeholder="https://instagram.com/seuperfil ou @seuperfil"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                />
+                <Button onClick={fetchInstagramProfile} disabled={isGenerating} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105">
+                  {isGenerating ? 'Gerando...' : '✨ Gerar Ingresso'}
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-8">
-              <div className="flex justify-center">
-                <div ref={ticketRef} className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 text-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl overflow-hidden">
+            <div className="space-y-8 animate-fadeIn">
+              <div className="flex justify-center transform transition-all duration-700 animate-slideUp">
+                <div ref={ticketRef} className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 text-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl overflow-hidden hover:scale-105 transition-transform duration-300">
                   {/* Background Pattern */}
                   <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-4 left-4 w-32 h-32 border border-white/20 rounded-full"></div>
@@ -281,13 +318,47 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                   </div>
                 </div>
               </div>
-              <div className="flex justify-center">
-                <Button onClick={downloadAsPNG} className="bg-green-600 px-8 py-3 text-lg">📥 Baixar PNG</Button>
+              <div className="flex justify-center animate-slideUp delay-300">
+                <Button onClick={downloadAsPNG} className="bg-green-600 hover:bg-green-700 px-8 py-3 text-lg font-semibold rounded-lg transition-all duration-200 hover:scale-105 shadow-lg">
+                  📥 Baixar PNG
+                </Button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+          from { 
+            opacity: 0; 
+            transform: translateY(30px); 
+          }
+          to { 
+            opacity: 1; 
+            transform: translateY(0); 
+          }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.8s ease-out;
+        }
+        
+        .animate-slideUp {
+          animation: slideUp 0.6s ease-out;
+        }
+        
+        .delay-300 {
+          animation-delay: 0.3s;
+          opacity: 0;
+          animation-fill-mode: forwards;
+        }
+      `}</style>
     </div>
   );
 };
