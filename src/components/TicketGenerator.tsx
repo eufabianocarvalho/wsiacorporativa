@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Download, Instagram } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import Background3D from '@/components/Background3D';
 
 interface TicketGeneratorProps {
@@ -118,40 +117,22 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
     });
   };
 
-  const generateAndSendImage = async (format: 'PNG' | 'PDF') => {
+  const generateAndSendImage = async () => {
     if (!ticketRef.current) return null;
     const canvas = await html2canvas(ticketRef.current, { 
       scale: 3, 
       useCORS: true,
       backgroundColor: null  // Fundo transparente
     });
-    const imgData = canvas.toDataURL('image/png');
-    if (format === 'PNG') return imgData;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 120] });
-    const imgWidth = 180;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-    return pdf.output('datauristring');
+    return canvas.toDataURL('image/png');
   };
 
   const downloadAsPNG = async () => {
-    const imageData = await generateAndSendImage('PNG');
+    const imageData = await generateAndSendImage();
     if (!imageData) return;
     const link = document.createElement('a');
     link.href = imageData;
     link.download = `ingresso-${instagramName}.png`;
-    link.click();
-  };
-
-  const downloadAsPDF = async () => {
-    const pdfData = await generateAndSendImage('PDF');
-    if (!pdfData) return;
-    const response = await fetch(pdfData);
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ingresso-${instagramName}.pdf`;
     link.click();
   };
 
@@ -199,10 +180,10 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                     <p className="text-blue-200 text-lg font-medium">Workshop Online Exclusivo</p>
                     <div className="mt-4 flex justify-center space-x-6 text-sm">
                       <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
-                        <span className="text-yellow-400">📅</span> 15 Junho 2025
+                        <span className="text-yellow-400">📅</span> 04 Junho 2025
                       </div>
                       <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
-                        <span className="text-yellow-400">🕐</span> 19:30
+                        <span className="text-yellow-400">🕐</span> 20h00
                       </div>
                       <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
                         <span className="text-yellow-400">💻</span> Online
@@ -244,19 +225,19 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
                   {/* Benefits Section */}
                   <div className="relative z-10 mb-6">
-                    <h3 className="text-lg font-bold mb-4 text-center text-yellow-400">🌟 SEUS BENEFÍCIOS VIP</h3>
+                    <h3 className="text-lg font-bold mb-4 text-center text-yellow-400">🌟 Quem participa ganha:</h3>
                     <div className="grid grid-cols-3 gap-4 text-center text-sm">
                       <div className="bg-white/5 p-3 rounded-lg">
-                        <div className="text-2xl mb-1">📚</div>
-                        <div className="font-semibold">Material Exclusivo</div>
+                        <div className="text-2xl mb-1">🎯</div>
+                        <div className="font-semibold">Acesso a casos de uso da IA</div>
                       </div>
                       <div className="bg-white/5 p-3 rounded-lg">
-                        <div className="text-2xl mb-1">🎥</div>
-                        <div className="font-semibold">Gravação Vitalícia</div>
+                        <div className="text-2xl mb-1">💡</div>
+                        <div className="font-semibold">Prompts que serão Usados</div>
                       </div>
                       <div className="bg-white/5 p-3 rounded-lg">
-                        <div className="text-2xl mb-1">💬</div>
-                        <div className="font-semibold">Suporte Premium</div>
+                        <div className="text-2xl mb-1">📹</div>
+                        <div className="font-semibold">Acesso a Aula Gravada por 24h</div>
                       </div>
                     </div>
                   </div>
@@ -279,9 +260,8 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col md:flex-row gap-4 justify-center max-w-md mx-auto">
-                <Button onClick={downloadAsPNG} className="flex-1 bg-green-600">📥 Baixar PNG</Button>
-                <Button onClick={downloadAsPDF} className="flex-1 bg-red-600">📄 Baixar PDF</Button>
+              <div className="flex justify-center">
+                <Button onClick={downloadAsPNG} className="bg-green-600 px-8 py-3 text-lg">📥 Baixar PNG</Button>
               </div>
             </div>
           )}
