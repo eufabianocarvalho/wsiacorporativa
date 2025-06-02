@@ -49,8 +49,15 @@ app.get('/api/instagram-info', async (req, res) => {
       console.log('⚠️ Ainda redirecionando para login com cookies');
     }
 
-    let full_name = titleText.replace(/\(.*?\)|[\u2022@]|Instagram photos.*$/gi, '').trim();
-    const profile_pic_url = $('meta[property="og:image"]').attr('content') || null;
+     let full_name = titleText
+     .replace(/\(.*?\)/gi, '')
+     .replace(/[\u2022@]/gi, '')
+     .replace(/Instagram photos.*$/gi, '')
+     .replace(/Fotos e vídeos do Instagram.*$/gi, '')
+     .replace(/Photos and videos from Instagram.*$/gi, '')
+     .replace(/\s+/g, ' ')
+     .trim();
+     const profile_pic_url = $('meta[property="og:image"]').attr('content') || null;
 
     console.log(`✅ Nome extraído: "${full_name}"`);
     console.log(`📸 Imagem extraída: ${profile_pic_url ? 'SIM' : 'NÃO'}`);
