@@ -61,7 +61,7 @@ const Index = () => {
 
   // Countdown timer - Target date: June 4, 2025 at 8 PM
   useEffect(() => {
-    const targetDate = new Date('2025-06-21T20:00:00-03:00').getTime();
+    const targetDate = new Date('2025-06-11T20:00:00-03:00').getTime();
     const updateCountdown = () => {
       const now = new Date().getTime();
       const difference = targetDate - now;
@@ -82,25 +82,47 @@ const Index = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'whatsapp') {
-      // IMPEDIR digitação de qualquer coisa que não seja número
+      // Permitir digitação livre, aplicar formatação apenas visual
       const numbersOnly = value.replace(/\D/g, '');
       
       // Limitar a 11 dígitos (DDD + 9 dígitos do celular)
       const limited = numbersOnly.slice(0, 11);
       
-      // Formatar APENAS para exibição: (XX) XXXXX-XXXX
-      let formatted = limited;
-      if (limited.length >= 2) {
-        formatted = `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
-      }
-      if (limited.length > 7) {
-        formatted = `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
-      }
-      
-      setFormData(prev => ({ ...prev, [name]: formatted }));
+      // Armazenar apenas números, formatação apenas para exibição
+      setFormData(prev => ({ ...prev, [name]: limited }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  // Função para formatar WhatsApp apenas para exibição
+  const formatWhatsAppDisplay = (value: string) => {
+    if (!value) return '';
+    
+    const numbers = value.replace(/\D/g, '');
+    
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+  };
+
+  // Validação específica do WhatsApp
+  const validateWhatsApp = (whatsapp: string) => {
+    const numbersOnly = whatsapp.replace(/\D/g, '');
+    
+    if (numbersOnly.length === 0) {
+      return "WhatsApp é obrigatório";
+    }
+    if (numbersOnly.length < 11) {
+      return "WhatsApp deve ter 11 dígitos (DDD + 9 dígitos)";
+    }
+    if (numbersOnly.length > 11) {
+      return "WhatsApp deve ter exatamente 11 dígitos";
+    }
+    if (numbersOnly[2] !== '9') {
+      return "Deve ser número de celular (3º dígito deve ser 9)";
+    }
+    return null; // Válido
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -213,7 +235,7 @@ const Index = () => {
               ALÉM DO CHATGPT
             </h2>
             <p className="text-base md:text-xl lg:text-2xl font-bold mb-6 md:mb-8 text-gray-100 hover:text-blue-200 transition-colors duration-300 px-2">
-              🚀 Masterclass Online e Gratuita Para Profissionais Corporativos
+              🚀 Masterclass Online Gratuita Para Profissionais Corporativos
             </p>
           </div>
 
@@ -439,7 +461,7 @@ const Index = () => {
                   : 'opacity-0 translate-y-5'
               }`}>
                 <label className="block text-sm font-semibold text-slate-200 mb-2">
-                  Qual o seu MAIOR Desafio?
+                  Seu Maior Desafio
                 </label>
                 <Textarea 
                   name="desafio" 
