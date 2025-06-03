@@ -57,7 +57,7 @@ const NotFound = () => {
           {/* Workshop Link */}
           <div className="mt-8 pt-8 border-t border-gray-700/30">
             <p className="text-gray-400 mb-4 hover:text-blue-300 transition-colors duration-300">
-              Que tal conhecer nosso workshop sobre IA Corporativa?
+              Que tal conhecer nossa Masterclass sobre IA Corporativa?
             </p>
             <Button
               onClick={() => navigate('/')}

@@ -375,7 +375,7 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                     <p className="text-blue-200 text-lg font-medium">Workshop Online Exclusivo</p>
                     <div className="mt-4 flex justify-center space-x-6 text-sm">
                       <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
-                        <span className="text-yellow-400">📅</span> 04 Junho 2025
+                        <span className="text-yellow-400">📅</span> 11 Junho 2025
                       </div>
                       <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
                         <span className="text-yellow-400">🕐</span> 20h00

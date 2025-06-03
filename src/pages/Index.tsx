@@ -61,7 +61,7 @@ const Index = () => {
 
   // Countdown timer - Target date: June 4, 2025 at 8 PM
   useEffect(() => {
-    const targetDate = new Date('2025-06-04T20:00:00-03:00').getTime();
+    const targetDate = new Date('2025-06-21T20:00:00-03:00').getTime();
     const updateCountdown = () => {
       const now = new Date().getTime();
       const difference = targetDate - now;
@@ -213,7 +213,7 @@ const Index = () => {
               ALÉM DO CHATGPT
             </h2>
             <p className="text-base md:text-xl lg:text-2xl font-bold mb-6 md:mb-8 text-gray-100 hover:text-blue-200 transition-colors duration-300 px-2">
-              🚀 Workshop Online Gratuito Para Profissionais Corporativos
+              🚀 Masterclass Online e Gratuita Para Profissionais Corporativos
             </p>
           </div>
 
@@ -225,7 +225,7 @@ const Index = () => {
           }`}>
             <div className="flex items-center justify-center mb-3 md:mb-4">
               <Calendar className="mr-2 md:mr-3 text-blue-400 hover:text-blue-300 transition-colors duration-300" size={20} />
-              <span className="text-lg md:text-2xl font-bold">04 DE JUNHO 2025 | 20h</span>
+              <span className="text-lg md:text-2xl font-bold">11 DE JUNHO 2025 | 20h</span>
             </div>
             <div className="flex items-center justify-center">
               <span className="text-red-500 font-bold text-sm md:text-lg text-center">🎯 VAGAS LIMITADAS - GRUPO SELETO</span>
@@ -439,7 +439,7 @@ const Index = () => {
                   : 'opacity-0 translate-y-5'
               }`}>
                 <label className="block text-sm font-semibold text-slate-200 mb-2">
-                  Seu Maior Desafio
+                  Qual o seu MAIOR Desafio?
                 </label>
                 <Textarea 
                   name="desafio" 
@@ -566,7 +566,7 @@ const Index = () => {
       <footer className="relative z-10 py-8 md:py-16 bg-black/95 backdrop-blur-sm text-white">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300">DETALHES DO WORKSHOP</h2>
+            <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300">DETALHES DA MASTERCLASS</h2>
             
             <Button 
               onClick={() => document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' })} 
