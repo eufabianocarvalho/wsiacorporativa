@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Calendar, Users, Target, Zap, CheckCircle, Brain, Cpu, Sparkles, Award, Building, Code, Rocket } from 'lucide-react';
+import { Calendar, Users, Target, Zap, CheckCircle, Brain, Cpu, Sparkles, Award, Building, Code, Rocket, TrendingUp, Shield, DollarSign, Clock, Users2, Network, Star, Eye, Settings, BarChart3 } from 'lucide-react';
 import TicketGenerator from '@/components/TicketGenerator';
 import Background3D from '@/components/Background3D';
 
@@ -59,7 +59,7 @@ const Index = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Countdown timer - Target date: June 4, 2025 at 8 PM
+  // Countdown timer - Target date: June 11, 2025 at 8 PM
   useEffect(() => {
     const targetDate = new Date('2025-06-11T20:00:00-03:00').getTime();
     const updateCountdown = () => {
@@ -501,7 +501,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Restante das seções com animações similares... */}
       {/* Quem vai lhe guiar nessa jornada */}
       <section className="relative z-10 py-8 md:py-16 bg-black/70 backdrop-blur-sm text-white">
         <div className="container mx-auto px-4">
@@ -582,14 +581,416 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Restante das seções... simplificando para não ficar muito longo */}
-      
+      {/* AO FINAL DO WORKSHOP, VOCÊ TERÁ */}
+      <section className="relative z-10 py-8 md:py-16 bg-black/80 backdrop-blur-sm text-white">
+        <div className="container mx-auto px-4">
+          <div 
+            className={`text-center mb-8 md:mb-12 transition-all duration-1000 transform ${
+              visibleSections.has('benefits') 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-10'
+            }`}
+            ref={el => sectionRefs.current['benefits'] = el}
+            data-section="benefits"
+          >
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300">
+              AO FINAL DO WORKSHOP, VOCÊ TERÁ:
+            </h2>
+          </div>
+
+          <div className={`grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-7xl mx-auto transition-all duration-1000 transform ${
+            visibleSections.has('benefits') 
+              ? 'opacity-100 translate-y-0 delay-300' 
+              : 'opacity-0 translate-y-10'
+          }`}>
+            {/* Card 1 */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group">
+              <div className="flex items-center mb-4">
+                <CheckCircle className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300 flex-shrink-0" size={24} />
+              </div>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Visão clara de como IA pode revolucionar seu negócio (com cases reais)
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group">
+              <div className="flex items-center mb-4">
+                <CheckCircle className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300 flex-shrink-0" size={24} />
+              </div>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Metodologia comprovada para implementação corporativa (passo a passo)
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group">
+              <div className="flex items-center mb-4">
+                <CheckCircle className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300 flex-shrink-0" size={24} />
+              </div>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Identificação de 3-5 oportunidades de IA no seu setor (análise personalizada)
+              </p>
+            </div>
+
+            {/* Card 4 */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group">
+              <div className="flex items-center mb-4">
+                <CheckCircle className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300 flex-shrink-0" size={24} />
+              </div>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Roadmap estratégico para os próximos 90 dias (plano de ação)
+              </p>
+            </div>
+
+            {/* Card 5 */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group">
+              <div className="flex items-center mb-4">
+                <CheckCircle className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300 flex-shrink-0" size={24} />
+              </div>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Acesso a recursos e parcerias exclusivas (apenas para participantes)
+              </p>
+            </div>
+
+            {/* Card 6 */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group">
+              <div className="flex items-center mb-4">
+                <CheckCircle className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300 flex-shrink-0" size={24} />
+              </div>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Network de executivos implementando IA (grupo VIP contínuo)
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2 HORAS QUE VÃO TRANSFORMAR SUA VISÃO SOBRE IA */}
+      <section className="relative z-10 py-8 md:py-16 bg-black/90 backdrop-blur-sm text-white">
+        <div className="container mx-auto px-4">
+          <div 
+            className={`text-center mb-8 md:mb-12 transition-all duration-1000 transform ${
+              visibleSections.has('content') 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-10'
+            }`}
+            ref={el => sectionRefs.current['content'] = el}
+            data-section="content"
+          >
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 hover:scale-105 transition-transform duration-300">
+              2 HORAS QUE VÃO TRANSFORMAR<br />
+              <span className="text-blue-400">SUA VISÃO SOBRE IA</span>
+            </h2>
+          </div>
+
+          <div className={`grid md:grid-cols-2 gap-6 md:gap-8 max-w-6xl mx-auto transition-all duration-1000 transform ${
+            visibleSections.has('content') 
+              ? 'opacity-100 translate-y-0 delay-300' 
+              : 'opacity-0 translate-y-10'
+          }`}>
+            {/* DEMONSTRAÇÃO AO VIVO */}
+            <div className="bg-gradient-to-br from-yellow-900/30 to-yellow-800/20 backdrop-blur-md rounded-2xl md:rounded-3xl p-4 md:p-6 border border-yellow-500/30 hover:scale-105 hover:shadow-yellow-500/20 hover:border-yellow-500/50 transition-all duration-300 group">
+              <div className="flex items-center mb-4">
+                <Zap className="text-yellow-400 group-hover:text-yellow-300 transition-colors duration-300 mr-3" size={28} />
+                <h3 className="text-xl md:text-2xl font-bold text-yellow-400 group-hover:text-yellow-300 transition-colors duration-300">
+                  DEMONSTRAÇÃO AO VIVO
+                </h3>
+              </div>
+              <p className="text-gray-300 mb-4 group-hover:text-white transition-colors duration-300">
+                Você verá na prática como empresas estão implementando IA para:
+              </p>
+              <div className="space-y-2 text-sm md:text-base text-gray-300 group-hover:text-gray-100 transition-colors duration-300">
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>Automatizar processos complexos (não apenas tarefas simples)</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>Multiplicar produtividade em vendas, marketing e operações</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>Reduzir custos operacionais em até 40%</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>Acelerar tomada de decisões com análise preditiva</span>
+                </div>
+              </div>
+            </div>
+
+            {/* METODOLOGIA EXCLUSIVA */}
+            <div className="bg-gradient-to-br from-green-900/30 to-green-800/20 backdrop-blur-md rounded-2xl md:rounded-3xl p-4 md:p-6 border border-green-500/30 hover:scale-105 hover:shadow-green-500/20 hover:border-green-500/50 transition-all duration-300 group">
+              <div className="flex items-center mb-4">
+                <CheckCircle className="text-green-400 group-hover:text-green-300 transition-colors duration-300 mr-3" size={28} />
+                <h3 className="text-xl md:text-2xl font-bold text-green-400 group-hover:text-green-300 transition-colors duration-300">
+                  METODOLOGIA EXCLUSIVA
+                </h3>
+              </div>
+              <div className="space-y-2 text-sm md:text-base text-gray-300 group-hover:text-gray-100 transition-colors duration-300">
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Framework de 3 etapas para implementação corporativa</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Análise de ROI para projetos de IA</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Roadmap estratégico personalizado para seu setor</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Identificação de oportunidades no seu negócio atual</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CASES REAIS DE SUCESSO */}
+            <div className="bg-gradient-to-br from-green-900/30 to-green-800/20 backdrop-blur-md rounded-2xl md:rounded-3xl p-4 md:p-6 border border-green-500/30 hover:scale-105 hover:shadow-green-500/20 hover:border-green-500/50 transition-all duration-300 group">
+              <div className="flex items-center mb-4">
+                <CheckCircle className="text-green-400 group-hover:text-green-300 transition-colors duration-300 mr-3" size={28} />
+                <h3 className="text-xl md:text-2xl font-bold text-green-400 group-hover:text-green-300 transition-colors duration-300">
+                  CASES REAIS DE SUCESSO
+                </h3>
+              </div>
+              <div className="space-y-2 text-sm md:text-base text-gray-300 group-hover:text-gray-100 transition-colors duration-300">
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Como uma empresa reduziu tempo em relatórios financeiros</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Estratégia de IA que aumenta conversão em vendas 30%+</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Otimização de processos de RH em grande empresa</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Sistema de IA que revolucionou atendimento ao cliente</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-400 mr-2">•</span>
+                  <span>Implementação que otimizou Segurança do Trabalho</span>
+                </div>
+              </div>
+            </div>
+
+            {/* APLICAÇÕES PRÁTICAS EM */}
+            <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/20 backdrop-blur-md rounded-2xl md:rounded-3xl p-4 md:p-6 border border-purple-500/30 hover:scale-105 hover:shadow-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group">
+              <div className="flex items-center mb-4">
+                <Rocket className="text-purple-400 group-hover:text-purple-300 transition-colors duration-300 mr-3" size={28} />
+                <h3 className="text-xl md:text-2xl font-bold text-purple-400 group-hover:text-purple-300 transition-colors duration-300">
+                  APLICAÇÕES PRÁTICAS EM:
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm md:text-base">
+                {['Vendas', 'Marketing', 'RH', 'Financeiro', 'Gestão', 'TI', 'Processos', 'Segurança'].map((item, index) => (
+                  <div key={index} className="bg-purple-700/20 rounded-lg p-2 text-center text-purple-200 group-hover:text-white group-hover:bg-purple-600/30 transition-all duration-300">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* POR QUE ESSE WORKSHOP É DIFERENTE? */}
+      <section className="relative z-10 py-8 md:py-16 bg-black/80 backdrop-blur-sm text-white">
+        <div className="container mx-auto px-4">
+          <div 
+            className={`text-center mb-8 md:mb-12 transition-all duration-1000 transform ${
+              visibleSections.has('differentials') 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-10'
+            }`}
+            ref={el => sectionRefs.current['differentials'] = el}
+            data-section="differentials"
+          >
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300">
+              POR QUE ESSE WORKSHOP É DIFERENTE?
+            </h2>
+          </div>
+
+          <div className={`grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-7xl mx-auto transition-all duration-1000 transform ${
+            visibleSections.has('differentials') 
+              ? 'opacity-100 translate-y-0 delay-300' 
+              : 'opacity-0 translate-y-10'
+          }`}>
+            {/* Card 1 - ACESSO EXCLUSIVO */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group text-center">
+              <div className="flex justify-center mb-4">
+                <Target className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300" size={32} />
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">
+                ACESSO EXCLUSIVO
+              </h3>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Conteúdo desenvolvido especificamente para líderes corporativos
+              </p>
+            </div>
+
+            {/* Card 2 - DEMONSTRAÇÕES REAIS */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group text-center">
+              <div className="flex justify-center mb-4">
+                <Zap className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300" size={32} />
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">
+                DEMONSTRAÇÕES REAIS
+              </h3>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Verá implementações funcionando ao vivo
+              </p>
+            </div>
+
+            {/* Card 3 - ESTRATÉGIA PRÁTICA */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group text-center">
+              <div className="flex justify-center mb-4">
+                <Clock className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300" size={32} />
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">
+                ESTRATÉGIA PRÁTICA
+              </h3>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Saia com um plano de ação personalizado
+              </p>
+            </div>
+
+            {/* Card 4 - NETWORKING QUALIFICADO */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group text-center">
+              <div className="flex justify-center mb-4">
+                <Users2 className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300" size={32} />
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">
+                NETWORKING QUALIFICADO
+              </h3>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Conecte-se com outros executivos visionários
+              </p>
+            </div>
+
+            {/* Card 5 - RESULTADOS MENSURÁVEIS */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group text-center">
+              <div className="flex justify-center mb-4">
+                <BarChart3 className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300" size={32} />
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">
+                RESULTADOS MENSURÁVEIS
+              </h3>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Cases com ROI comprovado
+              </p>
+            </div>
+
+            {/* Card 6 - OPORTUNIDADES EXCLUSIVAS */}
+            <div className="bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group text-center">
+              <div className="flex justify-center mb-4">
+                <Star className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300" size={32} />
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">
+                OPORTUNIDADES EXCLUSIVAS
+              </h3>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300">
+                Recursos e parcerias apenas para participantes
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DETALHES DO WORKSHOP */}
+      <section className="relative z-10 py-8 md:py-16 bg-black/90 backdrop-blur-sm text-white">
+        <div className="container mx-auto px-4">
+          <div 
+            className={`text-center mb-8 md:mb-12 transition-all duration-1000 transform ${
+              visibleSections.has('details') 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-10'
+            }`}
+            ref={el => sectionRefs.current['details'] = el}
+            data-section="details"
+          >
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300">
+              DETALHES DO WORKSHOP
+            </h2>
+          </div>
+
+          <div className={`grid md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto mb-8 transition-all duration-1000 transform ${
+            visibleSections.has('details') 
+              ? 'opacity-100 translate-y-0 delay-300' 
+              : 'opacity-0 translate-y-10'
+          }`}>
+            {/* Lista esquerda */}
+            <div className="space-y-3">
+              <div className="flex items-center text-slate-200 hover:text-white transition-colors duration-300">
+                <CheckCircle className="text-blue-400 mr-3 flex-shrink-0" size={20} />
+                <span>Workshop 100% gratuito e online via Zoom</span>
+              </div>
+              <div className="flex items-center text-slate-200 hover:text-white transition-colors duration-300">
+                <CheckCircle className="text-blue-400 mr-3 flex-shrink-0" size={20} />
+                <span>Link de acesso enviado por e-mail e WhatsApp</span>
+              </div>
+              <div className="flex items-center text-slate-200 hover:text-white transition-colors duration-300">
+                <CheckCircle className="text-blue-400 mr-3 flex-shrink-0" size={20} />
+                <span>Gravação exclusiva disponível por 72h</span>
+              </div>
+              <div className="flex items-center text-slate-200 hover:text-white transition-colors duration-300">
+                <CheckCircle className="text-blue-400 mr-3 flex-shrink-0" size={20} />
+                <span>Kit de materiais de apoio inclusos</span>
+              </div>
+            </div>
+
+            {/* Lista direita */}
+            <div className="space-y-3">
+              <div className="flex items-center text-slate-200 hover:text-white transition-colors duration-300">
+                <CheckCircle className="text-blue-400 mr-3 flex-shrink-0" size={20} />
+                <span>Grupo VIP no WhatsApp para networking</span>
+              </div>
+              <div className="flex items-center text-slate-200 hover:text-white transition-colors duration-300">
+                <CheckCircle className="text-blue-400 mr-3 flex-shrink-0" size={20} />
+                <span>Recursos exclusivos revelados no evento</span>
+              </div>
+              <div className="flex items-center text-slate-200 hover:text-white transition-colors duration-300">
+                <CheckCircle className="text-blue-400 mr-3 flex-shrink-0" size={20} />
+                <span>Acesso prioritário a futuras oportunidades</span>
+              </div>
+              <div className="flex items-center text-slate-200 hover:text-white transition-colors duration-300">
+                <CheckCircle className="text-blue-400 mr-3 flex-shrink-0" size={20} />
+                <span>Suporte contínuo pós-workshop</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Compromisso com a Qualidade */}
+          <div className={`bg-slate-800/60 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-8 max-w-4xl mx-auto border border-slate-700/30 hover:scale-105 hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:bg-slate-800/80 group ${
+            visibleSections.has('details') 
+              ? 'opacity-100 translate-y-0 delay-500' 
+              : 'opacity-0 translate-y-10'
+          }`}>
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <Sparkles className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300" size={32} />
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-blue-400 group-hover:text-blue-300 transition-colors duration-300 mb-4">
+                COMPROMISSO COM A QUALIDADE
+              </h3>
+              <p className="text-slate-200 group-hover:text-white transition-colors duration-300 leading-relaxed">
+                Este workshop foi desenvolvido com base em anos de experiência prática em implementação de IA corporativa. Nosso foco é entregar conteúdo aplicável que gere resultados reais para sua empresa.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="relative z-10 py-8 md:py-16 bg-black/95 backdrop-blur-sm text-white">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300">DETALHES DA MASTERCLASS</h2>
-            
             <Button 
               onClick={() => document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' })} 
               className="w-full md:w-auto h-12 md:h-16 text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white shadow-2xl transform hover:scale-105 transition-all duration-300 px-4 md:px-12 border-0 rounded-xl md:rounded-2xl hover:shadow-blue-500/50"
