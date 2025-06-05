@@ -6,6 +6,7 @@ import { Download, Instagram } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import Background3D from '@/components/Background3D';
 
+
 interface TicketGeneratorProps {
   userEmail: string;
   userName: string;
@@ -28,8 +29,10 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
   const [isGenerating, setIsGenerating] = useState(false);
   const [ticketGenerated, setTicketGenerated] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [progress, setProgress] = useState(0);
   const ticketRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
 
   // Função para formatar WhatsApp para webhook
   const formatWhatsAppForWebhook = (whatsapp: string, countryCode: string) => {
@@ -69,30 +72,8 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
     return null;
   };
 
- // const scrapeInstagramProfile = async (username: string) => {
-   // try {
-    //  const response = await fetch(`https://automacoes-wsiacorporativa-ws-proxy.euenvr.easypanel.host/api/instagram-info?username=${username}`);
-    //  if (!response.ok) throw new Error("Erro ao acessar proxy local");
-     // const data = await response.json();
-     // return {
-      //  full_name: data.full_name,
-      //  profile_pic_url: data.profile_pic_url,
-      //  username: data.username
-      //};
-    // } catch (error) {
-      //console.error("Erro no scraping:", error);
-      // Fallback para quando o proxy não está disponível
-      // return {
-       // full_name: username,
-      //  profile_pic_url: null,
-     //   username: username
-    //  };
-   // }
-  //};
 
-  // TicketGenerator.tsx (modificação da função scrapeInstagramProfile com APIFY)
-
-const scrapeInstagramProfile = async (username: string) => {
+const scrapeInstagramProfile = async (username: string, setProgress?: (p: number) => void) => {
   try {
     const runResponse = await fetch(`https://api.apify.com/v2/acts/dSCLg0C3YEZ83HzYX/runs?token=${import.meta.env.VITE_APIFYAPI_KEY}`, {
       method: "POST",
@@ -116,17 +97,19 @@ const scrapeInstagramProfile = async (username: string) => {
       status = statusData.data?.status;
       datasetId = statusData.data?.defaultDatasetId;
       attempt++;
+      if (setProgress) setProgress(Math.min(attempt * 5, 95));
     }
 
     if (!datasetId) throw new Error("Dataset ID não encontrado.");
+    if (setProgress) setProgress(98);
 
     const datasetResponse = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${import.meta.env.VITE_APIFYAPI_KEY}`);
     const data = await datasetResponse.json();
 
     const profile = data[0];
     if (!profile) throw new Error("Nenhum dado retornado no dataset.");
+    if (setProgress) setProgress(100);
 
-    // 🔄 Aplica proxy para contornar CORS da imagem
     const proxiedImage = `https://images.weserv.nl/?url=${encodeURIComponent(profile.profilePicUrl)}`;
 
     return {
@@ -136,6 +119,7 @@ const scrapeInstagramProfile = async (username: string) => {
     };
   } catch (error) {
     console.error("Erro na API REST APIFY:", error);
+    if (setProgress) setProgress(0);
     return {
       username,
       full_name: username,
@@ -143,6 +127,8 @@ const scrapeInstagramProfile = async (username: string) => {
     };
   }
 };
+
+
 
   const fetchInstagramProfile = async () => {
     if (!instagramUrl) {
@@ -168,7 +154,7 @@ const scrapeInstagramProfile = async (username: string) => {
       return;
     }
 
-    const profileData = await scrapeInstagramProfile(username);
+    const profileData = await scrapeInstagramProfile(username,setProgress);
     if (profileData) {
       setProfileImage(profileData.profile_pic_url);
       setInstagramName(profileData.username);
@@ -188,61 +174,88 @@ const scrapeInstagramProfile = async (username: string) => {
   };
 
   useEffect(() => {
-    if (ticketGenerated) setTimeout(sendTicketToWebhook, 1000);
+    if (ticketGenerated) setTimeout(sendTicketToWebhook, 2000);
   }, [ticketGenerated]);
 
   const sendTicketToWebhook = async () => {
-    if (!ticketRef.current) return;
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Gerar a imagem com as mesmas configurações do download (qualidade máxima)
-      const canvas = await html2canvas(ticketRef.current, { 
-        scale: 3, 
-        useCORS: true, 
-        backgroundColor: null,
-        allowTaint: false,
-        logging: false,
-        width: ticketRef.current.offsetWidth,
-        height: ticketRef.current.offsetHeight,
-        scrollX: 0,
-        scrollY: 0
-      });
-      
-      const imageData = canvas.toDataURL('image/png', 1.0); // Qualidade máxima
-      
-      // Formatar WhatsApp para envio (só números)
-      const whatsappFormatted = formatWhatsAppForWebhook(formData.whatsapp, formData.pais);
-      
-      // Gerar nome do arquivo
-      const fileName = `ingresso-${instagramName}-${Date.now()}.png`;
-      
-      const payload = {
-        ...formData,
-        whatsapp: whatsappFormatted, // Ex: 5511999999999 (só números)
-        whatsappOriginal: formData.whatsapp, // Como o usuário digitou
-        instagramUrl,
-        instagramName,
-        instagramFullName,
-        profileImage,
-        ticketImageUrl: fileName, // Nome do arquivo .png
-        ticketImageBase64: imageData, // Base64 para o webhook processar
-        imageFormat: 'png',
-        imageQuality: 'high',
-        timestamp: new Date().toISOString(),
-        action: 'ticket_generated',
-      };
-      
-      await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch (error) {
-      console.error('Erro ao enviar webhook:', error);
-    }
-  };
+  if (!ticketRef.current) return;
+
+  try {
+    // 🔼 Garante que está visível e no topo
+    ticketRef.current.scrollIntoView({ behavior: 'auto', block: 'center' });
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Aguarda render final (mais confiável que 2000ms)
+
+    const canvas = await html2canvas(ticketRef.current, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: null,
+      allowTaint: false,
+      logging: false,
+      width: ticketRef.current.offsetWidth,
+      height: ticketRef.current.offsetHeight,
+      scrollX: 0,
+      scrollY: 0
+    });
+
+    const imageData = canvas.toDataURL('image/png', 1.0);
+    const fileName = `ticket-${Date.now()}.png`;
+
+const whatsappFormatted = formData.whatsapp?.replace(/\D/g, '');
+// 🔍 Etapa 1: validações
+if (
+  !formData ||
+  !formData.whatsapp ||
+  !whatsappFormatted ||
+  !instagramUrl ||
+  !instagramName ||
+  !instagramFullName ||
+  !profileImage ||
+  !imageData
+) {
+  console.error("❌ Dados ausentes para envio do webhook. Verifique os valores:");
+  console.table({
+    formData,
+    whatsapp: formData?.whatsapp,
+    whatsappFormatted,
+    instagramUrl,
+    instagramName,
+    instagramFullName,
+    profileImage,
+    imageData
+  });
+  return;
+}
+
+
+// ✅ Etapa 2: construir o payload
+
+
+
+    const payload = {
+      ...formData,
+      whatsapp: whatsappFormatted,
+      whatsappOriginal: formData.whatsapp,
+      instagramUrl,
+      instagramName,
+      instagramFullName,
+      profileImage,
+      ticketImageUrl: fileName,
+      ticketImageBase64: imageData,
+      imageFormat: 'png',
+      imageQuality: 'high',
+      timestamp: new Date().toISOString(),
+      action: 'ticket_generated',
+    };
+
+    await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj',{
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    console.error('Erro ao enviar webhook:', error);
+  }
+};
 
   const generateAndSendImage = async () => {
     if (!ticketRef.current) return null;
@@ -401,6 +414,14 @@ const scrapeInstagramProfile = async (username: string) => {
                 <Button onClick={fetchInstagramProfile} disabled={isGenerating} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105">
                   {isGenerating ? 'Gerando...' : '✨ Gerar Ingresso'}
                 </Button>
+                {isGenerating && (
+                 <div className="w-full h-2 bg-gray-200 rounded overflow-hidden mt-2">
+                    <div
+                      className="h-full bg-blue-500 transition-all duration-200 ease-in-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+               )}
               </div>
             </div>
           ) : (
