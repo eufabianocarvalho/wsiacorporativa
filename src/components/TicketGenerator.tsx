@@ -69,26 +69,80 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
     return null;
   };
 
-  const scrapeInstagramProfile = async (username: string) => {
-    try {
-      const response = await fetch(`https://automacoes-wsiacorporativa-ws-proxy.euenvr.easypanel.host/api/instagram-info?username=${username}`);
-      if (!response.ok) throw new Error("Erro ao acessar proxy local");
-      const data = await response.json();
-      return {
-        full_name: data.full_name,
-        profile_pic_url: data.profile_pic_url,
-        username: data.username
-      };
-    } catch (error) {
-      console.error("Erro no scraping:", error);
+ // const scrapeInstagramProfile = async (username: string) => {
+   // try {
+    //  const response = await fetch(`https://automacoes-wsiacorporativa-ws-proxy.euenvr.easypanel.host/api/instagram-info?username=${username}`);
+    //  if (!response.ok) throw new Error("Erro ao acessar proxy local");
+     // const data = await response.json();
+     // return {
+      //  full_name: data.full_name,
+      //  profile_pic_url: data.profile_pic_url,
+      //  username: data.username
+      //};
+    // } catch (error) {
+      //console.error("Erro no scraping:", error);
       // Fallback para quando o proxy não está disponível
-      return {
-        full_name: username,
-        profile_pic_url: null,
-        username: username
-      };
+      // return {
+       // full_name: username,
+      //  profile_pic_url: null,
+     //   username: username
+    //  };
+   // }
+  //};
+
+  // TicketGenerator.tsx (modificação da função scrapeInstagramProfile com APIFY)
+
+const scrapeInstagramProfile = async (username: string) => {
+  try {
+    const runResponse = await fetch(`https://api.apify.com/v2/acts/dSCLg0C3YEZ83HzYX/runs?token=${import.meta.env.VITE_APIFYAPI_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usernames: [username] })
+    });
+
+    const runData = await runResponse.json();
+    const runId = runData.data?.id;
+    if (!runId) throw new Error("Run ID não retornado.");
+
+    // 🔄 Aguarda execução terminar
+    let status = "";
+    let datasetId = null;
+    let attempt = 0;
+    let statusData = null;
+    while (status !== "SUCCEEDED" && attempt < 20) {
+      await new Promise(resolve => setTimeout(resolve, 3000)); // 3s delay
+      const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${import.meta.env.VITE_APIFYAPI_KEY}`);
+      statusData = await statusRes.json();
+      status = statusData.data?.status;
+      datasetId = statusData.data?.defaultDatasetId;
+      attempt++;
     }
-  };
+
+    if (!datasetId) throw new Error("Dataset ID não encontrado.");
+
+    const datasetResponse = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${import.meta.env.VITE_APIFYAPI_KEY}`);
+    const data = await datasetResponse.json();
+
+    const profile = data[0];
+    if (!profile) throw new Error("Nenhum dado retornado no dataset.");
+
+    // 🔄 Aplica proxy para contornar CORS da imagem
+    const proxiedImage = `https://images.weserv.nl/?url=${encodeURIComponent(profile.profilePicUrl)}`;
+
+    return {
+      username: profile.username,
+      full_name: profile.fullName,
+      profile_pic_url: proxiedImage
+    };
+  } catch (error) {
+    console.error("Erro na API REST APIFY:", error);
+    return {
+      username,
+      full_name: username,
+      profile_pic_url: null
+    };
+  }
+};
 
   const fetchInstagramProfile = async () => {
     if (!instagramUrl) {
@@ -372,7 +426,7 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                     <h1 className="text-3xl font-bold mb-2 text-white">
                       IA CORPORATIVA: ALÉM DO CHATGPT
                     </h1>
-                    <p className="text-blue-200 text-lg font-medium">Workshop Online Exclusivo</p>
+                    <p className="text-blue-200 text-lg font-medium">Masterclass Online Exclusiva</p>
                     <div className="mt-4 flex justify-center space-x-6 text-sm">
                       <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
                         <span className="text-yellow-400">📅</span> 11 Junho 2025
@@ -450,7 +504,7 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
                       </div>
                     </div>
                     <p className="mt-4 text-xs opacity-75">
-                      Este ingresso é pessoal e intransferível • Workshop IA Corporativa 2025
+                      Este ingresso é pessoal e intransferível • MasterClass IA Corporativa 2025
                     </p>
                   </div>
                 </div>
