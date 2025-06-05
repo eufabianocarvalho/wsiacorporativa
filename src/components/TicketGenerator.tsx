@@ -181,59 +181,72 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
   if (!ticketRef.current) return;
 
   try {
-    // 🔼 Garante que está visível e no topo
+    // Garante que está visível e centralizado
     ticketRef.current.scrollIntoView({ behavior: 'auto', block: 'center' });
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Aguarda render final (mais confiável que 2000ms)
-
-    const canvas = await html2canvas(ticketRef.current, {
-      scale: 3,
+    
+    // Aguarda renderização completa
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Detectar se é mobile para ajustar configurações (igual ao download)
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Usar EXATAMENTE as mesmas configurações da função de download
+    const canvas = await html2canvas(ticketRef.current, { 
+      scale: isMobile ? 2 : 3, // Mesma escala da função de download
       useCORS: true,
-      backgroundColor: null,
       allowTaint: false,
+      backgroundColor: null,
       logging: false,
       width: ticketRef.current.offsetWidth,
       height: ticketRef.current.offsetHeight,
       scrollX: 0,
-      scrollY: 0
+      scrollY: 0,
+      windowWidth: isMobile ? 414 : window.innerWidth, // ✅ PARÂMETRO FUNDAMENTAL
+      windowHeight: isMobile ? 896 : window.innerHeight, // ✅ PARÂMETRO FUNDAMENTAL
+      onclone: (clonedDoc) => {
+        // ✅ CALLBACK FUNDAMENTAL - Remove animações e transformações
+        const clonedElement = clonedDoc.querySelector('[data-testid="ticket"]') || clonedDoc.querySelector('[ref]');
+        if (clonedElement) {
+          clonedElement.style.transform = 'none';
+          clonedElement.style.animation = 'none';
+        }
+      }
     });
-
-    const imageData = canvas.toDataURL('image/png', 1.0);
+    
+    const imageData = canvas.toDataURL('image/png', 0.9); // Mesma qualidade da função de download
     const fileName = `ticket-${Date.now()}.png`;
 
-const whatsappFormatted = formData.whatsapp?.replace(/\D/g, '');
-// 🔍 Etapa 1: validações
-if (
-  !formData ||
-  !formData.whatsapp ||
-  !whatsappFormatted ||
-  !instagramUrl ||
-  !instagramName ||
-  !instagramFullName ||
-  !profileImage ||
-  !imageData
-) {
-  console.error("❌ Dados ausentes para envio do webhook. Verifique os valores:");
-  console.table({
-    formData,
-    whatsapp: formData?.whatsapp,
-    whatsappFormatted,
-    instagramUrl,
-    instagramName,
-    instagramFullName,
-    profileImage,
-    imageData
-  });
-  return;
-}
+    const whatsappFormatted = formData.whatsapp?.replace(/\D/g, '');
+    
+    // Validações
+    if (
+      !formData ||
+      !formData.whatsapp ||
+      !formatWhatsAppForWebhook ||
+      !instagramUrl ||
+      !instagramName ||
+      !instagramFullName ||
+      !profileImage ||
+      !imageData
+    ) {
+      console.error("❌ Dados ausentes para envio do webhook. Verifique os valores:");
+      console.table({
+        formData,
+        whatsapp: formData?.whatsapp,
+        formatWhatsAppForWebhook,
+        instagramUrl,
+        instagramName,
+        instagramFullName,
+        profileImage,
+        imageData
+      });
+      return;
+    }
 
-
-// ✅ Etapa 2: construir o payload
-
-
-
+    // Construir payload
     const payload = {
       ...formData,
-      whatsapp: whatsappFormatted,
+      whatsapp: formatWhatsAppForWebhook,
       whatsappOriginal: formData.whatsapp,
       instagramUrl,
       instagramName,
@@ -536,7 +549,7 @@ if (
                   className="bg-green-600 hover:bg-green-700 px-8 py-3 text-lg font-semibold rounded-lg transition-all duration-200 hover:scale-105 shadow-lg touch-manipulation"
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
-                  📥 Baixar PNG
+                  📥 Baixe seu INGRESSO
                 </Button>
               </div>
             </div>
