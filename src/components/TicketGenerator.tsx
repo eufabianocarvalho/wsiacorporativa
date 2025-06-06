@@ -190,13 +190,16 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
     }
     
     const fileName = `ticket-${Date.now()}.png`;
-    const whatsappFormatted = formData.whatsapp?.replace(/\D/g, '');
+    
+    // ✅ CORRIGIR FORMATAÇÃO DO WHATSAPP
+    const whatsappNumbersOnly = formData.whatsapp?.replace(/\D/g, '') || '';
+    const countryCode = formData.pais === 'Brasil' ? '55' : '55'; // Ajuste conforme necessário
+    const whatsappFormatted = `${countryCode}${whatsappNumbersOnly}`;
     
     // Validações
     if (
       !formData ||
       !formData.whatsapp ||
-      !formatWhatsAppForWebhook ||
       !instagramUrl ||
       !instagramName ||
       !instagramFullName ||
@@ -207,20 +210,20 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
       console.table({
         formData,
         whatsapp: formData?.whatsapp,
-        formatWhatsAppForWebhook,
+        whatsappFormatted,
         instagramUrl,
         instagramName,
         instagramFullName,
         profileImage,
-        imageData
+        imageData: imageData ? 'presente' : 'ausente'
       });
       return;
     }
 
-    // Construir payload
+    // ✅ CONSTRUIR PAYLOAD COM WHATSAPP CORRETO
     const payload = {
       ...formData,
-      whatsapp: formatWhatsAppForWebhook,
+      whatsapp: whatsappFormatted, // ✅ VALOR FORMATADO, NÃO A FUNÇÃO
       whatsappOriginal: formData.whatsapp,
       instagramUrl,
       instagramName,
@@ -234,45 +237,25 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
       action: 'ticket_generated',
     };
 
-    await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj',{
+    // ✅ FETCH DENTRO DA FUNÇÃO ASYNC
+    const response = await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     
-    console.log("✅ Webhook enviado com sucesso!");
+    if (response.ok) {
+      console.log("✅ Webhook enviado com sucesso!");
+      console.log("📱 WhatsApp formatado:", whatsappFormatted);
+    } else {
+      console.error("❌ Erro na resposta do webhook:", response.status);
+    }
     
   } catch (error) {
-    console.error('Erro ao enviar webhook:', error);
+    console.error('❌ Erro ao enviar webhook:', error);
   }
 };
-    // Construir payload
-    const payload = {
-      ...formData,
-      whatsapp: formatWhatsAppForWebhook,
-      whatsappOriginal: formData.whatsapp,
-      instagramUrl,
-      instagramName,
-      instagramFullName,
-      profileImage,
-      ticketImageUrl: fileName,
-      ticketImageBase64: imageData,
-      imageFormat: 'png',
-      imageQuality: 'high',
-      timestamp: new Date().toISOString(),
-      action: 'ticket_generated',
-    };
-
-    await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj',{
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  } catch (error) {
-    console.error('Erro ao enviar webhook:', error);
-  };
-
-  const generateAndSendImage = async () => {
+ const generateAndSendImage = async () => {
     if (!ticketRef.current) return null;
     
     try {
