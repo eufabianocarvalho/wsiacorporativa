@@ -270,8 +270,7 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
     });
   } catch (error) {
     console.error('Erro ao enviar webhook:', error);
-  }
-};
+  };
 
   const generateAndSendImage = async () => {
     if (!ticketRef.current) return null;

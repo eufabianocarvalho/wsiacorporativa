@@ -65,7 +65,7 @@ const NotFound = () => {
               className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all duration-300 hover:scale-105"
             >
               <Sparkles className="mr-2" size={16} />
-              Ir para o Workshop
+              Ir para a Masterclass
             </Button>
           </div>
         </div>
