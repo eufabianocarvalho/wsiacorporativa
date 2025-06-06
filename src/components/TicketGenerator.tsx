@@ -60,7 +60,7 @@ const TicketGenerator: React.FC<TicketGeneratorProps> = ({ userEmail, userName, 
 
   const extractInstagramUsername = (url: string) => {
     const patterns = [
-      /instagram\.com\/([^\/\?]+)/,
+      /instagram\.com\/([^/?]+)/,
       /^@?([a-zA-Z0-9._]+)$/
     ];
     for (const pattern of patterns) {
@@ -178,153 +178,219 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
   }, [ticketGenerated]);
 
   const sendTicketToWebhook = async () => {
-  if (!ticketRef.current) return;
+    if (!ticketRef.current) return;
 
-  try {
-   const sendTicketToWebhook = async () => {
-  if (!ticketRef.current) return;
-
-  try {
-    // 🎯 NOVA ABORDAGEM: Renderização múltipla para garantir qualidade
-    const generateRobustImage = async () => {
-      // Scroll para garantir visibilidade total
-      ticketRef.current.scrollIntoView({ 
-        behavior: 'auto', 
-        block: 'center',
-        inline: 'center'
-      });
-      
-      // Aguardar renderização completa
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Detectar mobile
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      // Configurações otimizadas
-      const config = {
-        scale: isMobile ? 3 : 4, // Maior escala para melhor qualidade
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: null,
-        logging: false,
-        pixelRatio: window.devicePixelRatio || 1,
-        width: ticketRef.current.offsetWidth,
-        height: ticketRef.current.offsetHeight,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: isMobile ? 414 : 1200,
-        windowHeight: isMobile ? 896 : 800,
-        foreignObjectRendering: false, // Desabilita rendering problemático
-        removeContainer: true,
-        onclone: (clonedDoc) => {
-          // Garantir que o elemento está visível e sem transformações
-          const clonedElement = clonedDoc.querySelector('[data-testid="ticket"]');
-          if (clonedElement) {
-            clonedElement.style.transform = 'none';
-            clonedElement.style.animation = 'none';
-            clonedElement.style.transition = 'none';
-            clonedElement.style.position = 'relative';
-            clonedElement.style.top = '0';
-            clonedElement.style.left = '0';
-            clonedElement.style.width = '100%';
-            clonedElement.style.height = 'auto';
-            clonedElement.style.overflow = 'visible';
-            clonedElement.style.display = 'block';
-          }
-          
-          // Remover elementos de background que podem interferir
-          const backgrounds = clonedDoc.querySelectorAll('[class*="background"], [class*="Background"]');
-          backgrounds.forEach(bg => {
-            if (bg !== clonedElement && !clonedElement.contains(bg)) {
-              bg.style.display = 'none';
+    try {
+      // 🎯 NOVA ABORDAGEM: Renderização múltipla para garantir qualidade
+      const generateRobustImage = async () => {
+        // Scroll para garantir visibilidade total
+        ticketRef.current!.scrollIntoView({ 
+          behavior: 'auto', 
+          block: 'center',
+          inline: 'center'
+        });
+        
+        // Aguardar renderização completa
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Detectar mobile
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Configurações otimizadas
+        const config = {
+          scale: isMobile ? 3 : 4, // Maior escala para melhor qualidade
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: null,
+          logging: false,
+          pixelRatio: window.devicePixelRatio || 1,
+          width: ticketRef.current!.offsetWidth,
+          height: ticketRef.current!.offsetHeight,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: isMobile ? 414 : 1200,
+          windowHeight: isMobile ? 896 : 800,
+          foreignObjectRendering: false, // Desabilita rendering problemático
+          removeContainer: true,
+          onclone: (clonedDoc: Document) => {
+            // Garantir que o elemento está visível e sem transformações
+            const clonedElement = clonedDoc.querySelector('[data-testid="ticket"]') as HTMLElement;
+            if (clonedElement) {
+              clonedElement.style.transform = 'none';
+              clonedElement.style.animation = 'none';
+              clonedElement.style.transition = 'none';
+              clonedElement.style.position = 'relative';
+              clonedElement.style.top = '0';
+              clonedElement.style.left = '0';
+              clonedElement.style.width = '100%';
+              clonedElement.style.height = 'auto';
+              clonedElement.style.overflow = 'visible';
+              clonedElement.style.display = 'block';
             }
-          });
+            
+            // Remover elementos de background que podem interferir
+            const backgrounds = clonedDoc.querySelectorAll('[class*="background"], [class*="Background"]');
+            backgrounds.forEach(bg => {
+              if (bg !== clonedElement && !clonedElement?.contains(bg)) {
+                (bg as HTMLElement).style.display = 'none';
+              }
+            });
+          }
+        };
+        
+        // Primeira tentativa
+        let canvas = await html2canvas(ticketRef.current!, config);
+        let imageData = canvas.toDataURL('image/png', 0.95);
+        
+        // Verificar se a imagem foi gerada corretamente (mínimo de tamanho)
+        if (imageData.length < 50000) { // Se muito pequena, tentar novamente
+          console.log("🔄 Primeira tentativa resultou em imagem pequena, tentando novamente...");
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          canvas = await html2canvas(ticketRef.current!, config);
+          imageData = canvas.toDataURL('image/png', 0.95);
         }
+        
+        return imageData;
       };
       
-      // Primeira tentativa
-      let canvas = await html2canvas(ticketRef.current, config);
-      let imageData = canvas.toDataURL('image/png', 0.95);
+      const imageData = await generateRobustImage();
       
-      // Verificar se a imagem foi gerada corretamente (mínimo de tamanho)
-      if (imageData.length < 50000) { // Se muito pequena, tentar novamente
-        console.log("🔄 Primeira tentativa resultou em imagem pequena, tentando novamente...");
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        canvas = await html2canvas(ticketRef.current, config);
-        imageData = canvas.toDataURL('image/png', 0.95);
+      if (!imageData) {
+        console.error("❌ Erro ao gerar imagem para webhook");
+        return;
       }
       
-      return imageData;
-    };
-    
-    const imageData = await generateRobustImage();
-    
-    if (!imageData) {
-      console.error("❌ Erro ao gerar imagem para webhook");
-      return;
-    }
-    
-    const fileName = `ticket-${Date.now()}.png`;
-    
-    // Formatação do WhatsApp
-    const whatsappNumbersOnly = formData.whatsapp?.replace(/\D/g, '') || '';
-    const countryCode = formData.pais === 'Brasil' ? '55' : '55';
-    const whatsappFormatted = `${countryCode}${whatsappNumbersOnly}`;
-    
-    // Validações
-    if (
-      !formData ||
-      !formData.whatsapp ||
-      !instagramUrl ||
-      !instagramName ||
-      !instagramFullName ||
-      !profileImage ||
-      !imageData
-    ) {
-      console.error("❌ Dados ausentes para envio do webhook.");
-      return;
-    }
+      const fileName = `ticket-${Date.now()}.png`;
+      
+      // Formatação do WhatsApp
+      const whatsappNumbersOnly = formData.whatsapp?.replace(/\D/g, '') || '';
+      const countryCode = formData.pais === 'Brasil' ? '55' : '55';
+      const whatsappFormatted = `${countryCode}${whatsappNumbersOnly}`;
+      
+      // Validações
+      if (
+        !formData ||
+        !formData.whatsapp ||
+        !instagramUrl ||
+        !instagramName ||
+        !instagramFullName ||
+        !profileImage ||
+        !imageData
+      ) {
+        console.error("❌ Dados ausentes para envio do webhook.");
+        return;
+      }
 
-    // Construir payload
-    const payload = {
-      ...formData,
-      whatsapp: whatsappFormatted,
-      whatsappOriginal: formData.whatsapp,
-      instagramUrl,
-      instagramName,
-      instagramFullName,
-      profileImage,
-      ticketImageUrl: fileName,
-      ticketImageBase64: imageData,
-      imageFormat: 'png',
-      imageQuality: 'high',
-      imageSize: imageData.length,
-      timestamp: new Date().toISOString(),
-      action: 'ticket_generated',
-    };
+      // Construir payload
+      const payload = {
+        ...formData,
+        whatsapp: whatsappFormatted,
+        whatsappOriginal: formData.whatsapp,
+        instagramUrl,
+        instagramName,
+        instagramFullName,
+        profileImage,
+        ticketImageUrl: fileName,
+        ticketImageBase64: imageData,
+        imageFormat: 'png',
+        imageQuality: 'high',
+        imageSize: imageData.length,
+        timestamp: new Date().toISOString(),
+        action: 'ticket_generated',
+      };
 
-    const response = await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    
-    if (response.ok) {
-      console.log("✅ Webhook enviado com sucesso!");
-      console.log("📱 WhatsApp:", whatsappFormatted);
-      console.log("🖼️ Tamanho da imagem:", Math.round(imageData.length / 1024), "KB");
-    } else {
-      console.error("❌ Erro na resposta do webhook:", response.status);
+      const response = await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      if (response.ok) {
+        console.log("✅ Webhook enviado com sucesso!");
+        console.log("📱 WhatsApp:", whatsappFormatted);
+        console.log("🖼️ Tamanho da imagem:", Math.round(imageData.length / 1024), "KB");
+      } else {
+        console.error("❌ Erro na resposta do webhook:", response.status);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao enviar webhook:', error);
     }
-    
-  } catch (error) {
-    console.error('❌ Erro ao enviar webhook:', error);
-  }
-};
+  };
 
   const downloadAsPNG = async () => {
     try {
-      const imageData = await generateAndSendImage();
+      // Reutilizar a mesma lógica de geração de imagem do webhook
+      const generateRobustImage = async () => {
+        if (!ticketRef.current) return null;
+        
+        // Scroll para garantir visibilidade total
+        ticketRef.current.scrollIntoView({ 
+          behavior: 'auto', 
+          block: 'center',
+          inline: 'center'
+        });
+        
+        // Aguardar renderização completa
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Detectar mobile
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Configurações otimizadas
+        const config = {
+          scale: isMobile ? 3 : 4,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: null,
+          logging: false,
+          pixelRatio: window.devicePixelRatio || 1,
+          width: ticketRef.current.offsetWidth,
+          height: ticketRef.current.offsetHeight,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: isMobile ? 414 : 1200,
+          windowHeight: isMobile ? 896 : 800,
+          foreignObjectRendering: false,
+          removeContainer: true,
+          onclone: (clonedDoc: Document) => {
+            const clonedElement = clonedDoc.querySelector('[data-testid="ticket"]') as HTMLElement;
+            if (clonedElement) {
+              clonedElement.style.transform = 'none';
+              clonedElement.style.animation = 'none';
+              clonedElement.style.transition = 'none';
+              clonedElement.style.position = 'relative';
+              clonedElement.style.top = '0';
+              clonedElement.style.left = '0';
+              clonedElement.style.width = '100%';
+              clonedElement.style.height = 'auto';
+              clonedElement.style.overflow = 'visible';
+              clonedElement.style.display = 'block';
+            }
+            
+            const backgrounds = clonedDoc.querySelectorAll('[class*="background"], [class*="Background"]');
+            backgrounds.forEach(bg => {
+              if (bg !== clonedElement && !clonedElement?.contains(bg)) {
+                (bg as HTMLElement).style.display = 'none';
+              }
+            });
+          }
+        };
+        
+        let canvas = await html2canvas(ticketRef.current, config);
+        let imageData = canvas.toDataURL('image/png', 0.95);
+        
+        if (imageData.length < 50000) {
+          console.log("🔄 Primeira tentativa resultou em imagem pequena, tentando novamente...");
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          canvas = await html2canvas(ticketRef.current, config);
+          imageData = canvas.toDataURL('image/png', 0.95);
+        }
+        
+        return imageData;
+      };
+
+      const imageData = await generateRobustImage();
       if (!imageData) {
         toast({ 
           title: "Erro no download", 
@@ -576,7 +642,7 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
