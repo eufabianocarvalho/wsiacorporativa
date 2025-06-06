@@ -181,41 +181,15 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
   if (!ticketRef.current) return;
 
   try {
-    // Garante que está visível e centralizado
-    ticketRef.current.scrollIntoView({ behavior: 'auto', block: 'center' });
+    // 🎯 USAR EXATAMENTE A MESMA FUNÇÃO QUE FUNCIONA NO DOWNLOAD
+    const imageData = await generateAndSendImage();
     
-    // Aguarda renderização completa
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!imageData) {
+      console.error("❌ Erro ao gerar imagem para webhook");
+      return;
+    }
     
-    // Detectar se é mobile para ajustar configurações (igual ao download)
-    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    // Usar EXATAMENTE as mesmas configurações da função de download
-    const canvas = await html2canvas(ticketRef.current, { 
-      scale: isMobile ? 2 : 3, // Mesma escala da função de download
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: null,
-      logging: false,
-      width: ticketRef.current.offsetWidth,
-      height: ticketRef.current.offsetHeight,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: isMobile ? 414 : window.innerWidth, // ✅ PARÂMETRO FUNDAMENTAL
-      windowHeight: isMobile ? 896 : window.innerHeight, // ✅ PARÂMETRO FUNDAMENTAL
-      onclone: (clonedDoc) => {
-        // ✅ CALLBACK FUNDAMENTAL - Remove animações e transformações
-        const clonedElement = clonedDoc.querySelector('[data-testid="ticket"]') || clonedDoc.querySelector('[ref]');
-        if (clonedElement) {
-          clonedElement.style.transform = 'none';
-          clonedElement.style.animation = 'none';
-        }
-      }
-    });
-    
-    const imageData = canvas.toDataURL('image/png', 0.9); // Mesma qualidade da função de download
     const fileName = `ticket-${Date.now()}.png`;
-
     const whatsappFormatted = formData.whatsapp?.replace(/\D/g, '');
     
     // Validações
@@ -243,6 +217,35 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
       return;
     }
 
+    // Construir payload
+    const payload = {
+      ...formData,
+      whatsapp: formatWhatsAppForWebhook,
+      whatsappOriginal: formData.whatsapp,
+      instagramUrl,
+      instagramName,
+      instagramFullName,
+      profileImage,
+      ticketImageUrl: fileName,
+      ticketImageBase64: imageData,
+      imageFormat: 'png',
+      imageQuality: 'high',
+      timestamp: new Date().toISOString(),
+      action: 'ticket_generated',
+    };
+
+    await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj',{
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    
+    console.log("✅ Webhook enviado com sucesso!");
+    
+  } catch (error) {
+    console.error('Erro ao enviar webhook:', error);
+  }
+};
     // Construir payload
     const payload = {
       ...formData,
