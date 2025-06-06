@@ -181,8 +181,83 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
   if (!ticketRef.current) return;
 
   try {
-    // 🎯 USAR EXATAMENTE A MESMA FUNÇÃO QUE FUNCIONA NO DOWNLOAD
-    const imageData = await generateAndSendImage();
+   const sendTicketToWebhook = async () => {
+  if (!ticketRef.current) return;
+
+  try {
+    // 🎯 NOVA ABORDAGEM: Renderização múltipla para garantir qualidade
+    const generateRobustImage = async () => {
+      // Scroll para garantir visibilidade total
+      ticketRef.current.scrollIntoView({ 
+        behavior: 'auto', 
+        block: 'center',
+        inline: 'center'
+      });
+      
+      // Aguardar renderização completa
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Detectar mobile
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // Configurações otimizadas
+      const config = {
+        scale: isMobile ? 3 : 4, // Maior escala para melhor qualidade
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        logging: false,
+        pixelRatio: window.devicePixelRatio || 1,
+        width: ticketRef.current.offsetWidth,
+        height: ticketRef.current.offsetHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: isMobile ? 414 : 1200,
+        windowHeight: isMobile ? 896 : 800,
+        foreignObjectRendering: false, // Desabilita rendering problemático
+        removeContainer: true,
+        onclone: (clonedDoc) => {
+          // Garantir que o elemento está visível e sem transformações
+          const clonedElement = clonedDoc.querySelector('[data-testid="ticket"]');
+          if (clonedElement) {
+            clonedElement.style.transform = 'none';
+            clonedElement.style.animation = 'none';
+            clonedElement.style.transition = 'none';
+            clonedElement.style.position = 'relative';
+            clonedElement.style.top = '0';
+            clonedElement.style.left = '0';
+            clonedElement.style.width = '100%';
+            clonedElement.style.height = 'auto';
+            clonedElement.style.overflow = 'visible';
+            clonedElement.style.display = 'block';
+          }
+          
+          // Remover elementos de background que podem interferir
+          const backgrounds = clonedDoc.querySelectorAll('[class*="background"], [class*="Background"]');
+          backgrounds.forEach(bg => {
+            if (bg !== clonedElement && !clonedElement.contains(bg)) {
+              bg.style.display = 'none';
+            }
+          });
+        }
+      };
+      
+      // Primeira tentativa
+      let canvas = await html2canvas(ticketRef.current, config);
+      let imageData = canvas.toDataURL('image/png', 0.95);
+      
+      // Verificar se a imagem foi gerada corretamente (mínimo de tamanho)
+      if (imageData.length < 50000) { // Se muito pequena, tentar novamente
+        console.log("🔄 Primeira tentativa resultou em imagem pequena, tentando novamente...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        canvas = await html2canvas(ticketRef.current, config);
+        imageData = canvas.toDataURL('image/png', 0.95);
+      }
+      
+      return imageData;
+    };
+    
+    const imageData = await generateRobustImage();
     
     if (!imageData) {
       console.error("❌ Erro ao gerar imagem para webhook");
@@ -191,9 +266,9 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
     
     const fileName = `ticket-${Date.now()}.png`;
     
-    // ✅ CORRIGIR FORMATAÇÃO DO WHATSAPP
+    // Formatação do WhatsApp
     const whatsappNumbersOnly = formData.whatsapp?.replace(/\D/g, '') || '';
-    const countryCode = formData.pais === 'Brasil' ? '55' : '55'; // Ajuste conforme necessário
+    const countryCode = formData.pais === 'Brasil' ? '55' : '55';
     const whatsappFormatted = `${countryCode}${whatsappNumbersOnly}`;
     
     // Validações
@@ -206,24 +281,14 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
       !profileImage ||
       !imageData
     ) {
-      console.error("❌ Dados ausentes para envio do webhook. Verifique os valores:");
-      console.table({
-        formData,
-        whatsapp: formData?.whatsapp,
-        whatsappFormatted,
-        instagramUrl,
-        instagramName,
-        instagramFullName,
-        profileImage,
-        imageData: imageData ? 'presente' : 'ausente'
-      });
+      console.error("❌ Dados ausentes para envio do webhook.");
       return;
     }
 
-    // ✅ CONSTRUIR PAYLOAD COM WHATSAPP CORRETO
+    // Construir payload
     const payload = {
       ...formData,
-      whatsapp: whatsappFormatted, // ✅ VALOR FORMATADO, NÃO A FUNÇÃO
+      whatsapp: whatsappFormatted,
       whatsappOriginal: formData.whatsapp,
       instagramUrl,
       instagramName,
@@ -233,11 +298,11 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
       ticketImageBase64: imageData,
       imageFormat: 'png',
       imageQuality: 'high',
+      imageSize: imageData.length,
       timestamp: new Date().toISOString(),
       action: 'ticket_generated',
     };
 
-    // ✅ FETCH DENTRO DA FUNÇÃO ASYNC
     const response = await fetch('https://hook.us1.make.com/5kpb2wdyfl9tf7y6u0tu44ypaal8l8tj', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -246,7 +311,8 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
     
     if (response.ok) {
       console.log("✅ Webhook enviado com sucesso!");
-      console.log("📱 WhatsApp formatado:", whatsappFormatted);
+      console.log("📱 WhatsApp:", whatsappFormatted);
+      console.log("🖼️ Tamanho da imagem:", Math.round(imageData.length / 1024), "KB");
     } else {
       console.error("❌ Erro na resposta do webhook:", response.status);
     }
@@ -255,44 +321,6 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
     console.error('❌ Erro ao enviar webhook:', error);
   }
 };
- const generateAndSendImage = async () => {
-    if (!ticketRef.current) return null;
-    
-    try {
-      // Aguardar um pouco para garantir que tudo foi renderizado
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Detectar se é mobile para ajustar configurações
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      const canvas = await html2canvas(ticketRef.current, { 
-        scale: isMobile ? 2 : 3, // Menor escala no mobile para melhor performance
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: null,
-        logging: false,
-        width: ticketRef.current.offsetWidth,
-        height: ticketRef.current.offsetHeight,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: isMobile ? 414 : window.innerWidth, // Largura específica para mobile
-        windowHeight: isMobile ? 896 : window.innerHeight,
-        onclone: (clonedDoc) => {
-          // Garantir que fontes e estilos sejam aplicados no clone
-          const clonedElement = clonedDoc.querySelector('[data-testid="ticket"]') || clonedDoc.querySelector('[ref]');
-          if (clonedElement) {
-            clonedElement.style.transform = 'none';
-            clonedElement.style.animation = 'none';
-          }
-        }
-      });
-      
-      return canvas.toDataURL('image/png', 0.9); // Qualidade um pouco menor para mobile
-    } catch (error) {
-      console.error('Erro ao gerar imagem:', error);
-      return null;
-    }
-  };
 
   const downloadAsPNG = async () => {
     try {
@@ -403,12 +431,18 @@ const scrapeInstagramProfile = async (username: string, setProgress?: (p: number
                   ? 'opacity-100 translate-y-0' 
                   : 'opacity-0 translate-y-5'
               }`}>
-                <Input
-                  value={instagramUrl}
-                  onChange={(e) => setInstagramUrl(e.target.value)}
-                  placeholder="https://instagram.com/seuperfil ou @seuperfil"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                />
+                 <Input
+                    value={instagramUrl}
+                    onChange={(e) => setInstagramUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        fetchInstagramProfile();
+                      }
+                    }}
+                    placeholder="https://instagram.com/seuperfil ou @seuperfil"
+                    className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  />
                 <Button onClick={fetchInstagramProfile} disabled={isGenerating} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105">
                   {isGenerating ? 'Gerando...' : '✨ Gerar Ingresso'}
                 </Button>
